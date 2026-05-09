@@ -33,78 +33,93 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ResultDto> CreateOrderFromBasket(string shippingAddress)
+        public async Task<ResultDto> CreateOrderFromBasket(OrderCreateDto dto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // 1. Kullanıcının aktif sepetini ve içindeki ürünleri çekiyoruz
-            var basket = _basketRepository.Where(b => b.AppUserId == userId && b.IsActive)
-                .Include(b => b.BasketItems)
-                .ThenInclude(bi => bi.Product)
-                .FirstOrDefault();
-
-            if (basket == null || !basket.BasketItems.Any())
+            // Hata yakalama bloğumuz devrede
+            try
             {
-                result.Status = false;
-                result.Message = "Sepetiniz boş! Sipariş oluşturulamaz.";
-                return result;
-            }
-
-            // 2. KRİTİK ADIM: Stok Kontrolü
-            // Siparişi onaylamadan önce her bir ürünün stoğunu tek tek kontrol ediyoruz
-            foreach (var item in basket.BasketItems)
-            {
-                if (item.Product.Stock < item.Quantity)
+                // 1. ÖDEME KONTROLÜ (Mock Payment)
+                if (string.IsNullOrWhiteSpace(dto.CardNumber) || dto.CardNumber.Length != 16)
                 {
                     result.Status = false;
-                    result.Message = $"Yetersiz Stok! '{item.Product.Name}' ürününden stokta sadece {item.Product.Stock} adet var. Lütfen sepetinizi güncelleyin.";
+                    result.Message = "Ödeme Reddedildi: Kart numarası 16 hane olmalıdır.";
                     return result;
                 }
-            }
 
-            // 3. Sipariş Başlığını Oluşturma
-            var newOrder = new Order
-            {
-                AppUserId = userId,
-                Address = shippingAddress,
-                OrderStatus = "Hazırlanıyor",
-                TotalPrice = basket.BasketItems.Sum(x => x.Product.Price * x.Quantity),
-                Created = DateTime.Now,
-                Updated = DateTime.Now,
-                IsActive = true,
-                OrderItems = new List<OrderItem>()
-            };
+                // 2. SEPET VE STOK KONTROLÜ
+                var basket = _basketRepository.Where(b => b.AppUserId == userId && b.IsActive)
+                    .Include(b => b.BasketItems).ThenInclude(bi => bi.Product).FirstOrDefault();
 
-            // 4. Sepetteki Ürünleri Sipariş Kalemine Dönüştürme ve STOKTAN DÜŞME
-            foreach (var item in basket.BasketItems)
-            {
-                // Sipariş detayı ekleniyor
-                newOrder.OrderItems.Add(new OrderItem
+                if (basket == null || !basket.BasketItems.Any())
                 {
-                    ProductId = item.ProductId,
-                    Quantity = item.Quantity,
-                    UnitPrice = item.Product.Price, // Satın alma anındaki fiyat sabitleniyor
+                    result.Status = false;
+                    result.Message = "Sepet boş!";
+                    return result;
+                }
+
+                // 3. TUTAR HESAPLAMA VE KUPON UYGULAMA
+                decimal totalAmount = basket.BasketItems.Sum(x => x.Product.Price * x.Quantity);
+
+                if (!string.IsNullOrWhiteSpace(dto.CouponCode) && dto.CouponCode.Trim().ToUpper() == "SADO10")
+                {
+                    totalAmount *= 0.90m; // %10 İndirim çakıyoruz
+                }
+
+                // 4. SİPARİŞ OLUŞTURMA
+                var newOrder = new Order
+                {
+                    AppUserId = userId,
+                    Address = dto.ShippingAddress,
+                    OrderStatus = "Hazırlanıyor",
+                    TotalPrice = totalAmount,
                     Created = DateTime.Now,
-                    Updated = DateTime.Now,
-                    IsActive = true
-                });
+                    IsActive = true,
+                    OrderItems = new List<OrderItem>()
+                };
 
-                // STOK OTOMATİK DÜŞÜRÜLÜYOR
-                item.Product.Stock -= item.Quantity;
-                await _productRepository.UpdateAsync(item.Product);
+                foreach (var item in basket.BasketItems)
+                {
+                    // Stok Kontrolü
+                    if (item.Product.Stock < item.Quantity)
+                    {
+                        result.Status = false;
+                        result.Message = $"Yetersiz Stok: {item.Product.Name}";
+                        return result;
+                    }
+
+                    newOrder.OrderItems.Add(new OrderItem
+                    {
+                        ProductId = item.ProductId,
+                        Quantity = item.Quantity,
+                        UnitPrice = item.Product.Price,
+                        Created = DateTime.Now,
+                        IsActive = true
+                    });
+
+                    // Stoktan Düşme
+                    item.Product.Stock -= item.Quantity;
+                    await _productRepository.UpdateAsync(item.Product);
+                }
+
+                await _orderRepository.AddAsync(newOrder);
+
+                // Sepeti Kapat
+                basket.IsActive = false;
+                await _basketRepository.UpdateAsync(basket);
+
+                result.Status = true;
+                result.Message = $"Ödeme Başarılı! {totalAmount} TL çekildi. Siparişiniz oluşturuldu.";
+                return result;
             }
-
-            // 5. Siparişi Kaydet
-            await _orderRepository.AddAsync(newOrder);
-
-            // 6. Sepeti Kapat (IsActive = false yaparak sepeti 'siparişe dönüşmüş' sayıyoruz)
-            basket.IsActive = false;
-            basket.Updated = DateTime.Now;
-            await _basketRepository.UpdateAsync(basket);
-
-            result.Status = true;
-            result.Message = "Ödeme başarılı! Siparişiniz alındı, stoklar güncellendi ve sepetiniz boşaltıldı.";
-            return result;
+            catch (Exception ex)
+            {
+                // Kod bir yerde patlarsa sistem çökmeden buraya düşecek ve bize hatayı söyleyecek
+                result.Status = false;
+                result.Message = "İşlem sırasında bir hata oluştu: " + ex.Message;
+                return result;
+            }
         }
 
         [HttpGet]
