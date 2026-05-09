@@ -10,7 +10,7 @@ namespace ECommerce.API.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    [Authorize] // Favori eklemek ve görmek için giriş zorunlu
+    [Authorize] // Sınıf seviyesinde Authorize olduğu için tüm metotlar otomatik korunur
     public class FavoriteController : ControllerBase
     {
         private readonly IRepository<Favorite> _favoriteRepository;
@@ -19,14 +19,6 @@ namespace ECommerce.API.Controllers
         public FavoriteController(IRepository<Favorite> favoriteRepository)
         {
             _favoriteRepository = favoriteRepository;
-        }
-
-        [HttpGet]
-        public IActionResult MyFavorites()
-        {
-            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            var favorites = _favoriteRepository.Where(f => f.AppUserId == userId && f.IsActive).ToList();
-            return Ok(favorites);
         }
 
         [HttpPost]
@@ -59,7 +51,6 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpDelete("{productId}")]
-        [Authorize]
         public async Task<ResultDto> Remove(int productId)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -81,7 +72,6 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpGet]
-        [Authorize]
         public IActionResult GetMyFavorites()
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);

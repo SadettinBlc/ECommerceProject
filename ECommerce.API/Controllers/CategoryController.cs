@@ -26,28 +26,47 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")] // Sadece admin kategori ekleyebilir
-        public async Task<ResultDto> Add(Category category)
+        public async Task<ResultDto> Add(CategoryAddDto dto) // Artık Category değil, ufacık DTO'yu alıyoruz
         {
-            category.Created = DateTime.Now;
-            category.Updated = DateTime.Now;
-            category.IsActive = true;
+            // DTO'dan gelen ufak veriyi, asıl veritabanı modelimize (Category) çeviriyoruz
+            var newCategory = new Category
+            {
+                Name = dto.Name,
+                Created = DateTime.Now,
+                Updated = DateTime.Now,
+                IsActive = true
+            };
 
-            await _categoryRepository.AddAsync(category);
+            await _categoryRepository.AddAsync(newCategory);
+
             result.Status = true;
             result.Message = "Kategori başarıyla eklendi.";
             return result;
         }
 
         [HttpPut]
-        //[Authorize(Roles = "Admin")]
-        public async Task<ResultDto> Update(Category category)
+        // [Authorize(Roles = "Admin")]
+        public async Task<ResultDto> Update(CategoryUpdateDto dto)
         {
+            // Önce güncellenecek kategoriyi veritabanından buluyoruz
+            var category = _categoryRepository.Where(c => c.Id == dto.Id).FirstOrDefault();
+
+            if (category == null)
+            {
+                result.Status = false;
+                result.Message = "Güncellenecek kategori bulunamadı.";
+                return result;
+            }
+
+            // Sadece değişmesine izin verdiğimiz alanları güncelliyoruz
+            category.Name = dto.Name;
+            category.IsActive = dto.IsActive;
             category.Updated = DateTime.Now;
+
             await _categoryRepository.UpdateAsync(category);
 
             result.Status = true;
-            result.Message = "Ürün başarıyla güncellendi.";
+            result.Message = "Kategori başarıyla güncellendi.";
             return result;
         }
 
