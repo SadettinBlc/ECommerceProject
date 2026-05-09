@@ -38,5 +38,27 @@ namespace ECommerce.API.Controllers
             result.Message = "Kategori başarıyla eklendi.";
             return result;
         }
+
+        [HttpPut]
+        //[Authorize(Roles = "Admin")]
+        public async Task<ResultDto> Update(Category category)
+        {
+            category.Updated = DateTime.Now;
+            await _categoryRepository.UpdateAsync(category);
+
+            result.Status = true;
+            result.Message = "Ürün başarıyla güncellendi.";
+            return result;
+        }
+
+        [HttpDelete("{id}")]
+        //[Authorize(Roles = "Admin")]
+        public async Task<ResultDto> Delete(int id)
+        {
+            await _categoryRepository.DeleteAsync(id);
+            result.Status = true;
+            result.Message = "Ürün sistemden silindi.";
+            return result;
+        }
     }
 }

@@ -154,5 +154,68 @@ namespace ECommerce.API.Controllers
             result.Message = $"Sipariş durumu '{newStatus}' olarak güncellendi.";
             return result;
         }
+        [HttpPost("{orderId}")]
+        [Authorize]
+        public async Task<ResultDto> CancelOrder(int orderId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var order = _orderRepository.Where(o => o.Id == orderId && o.AppUserId == userId)
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+                .FirstOrDefault();
+
+            if (order == null)
+            {
+                result.Status = false;
+                result.Message = "Sipariş bulunamadı veya size ait değil.";
+                return result;
+            }
+
+            // Sadece henüz kargolanmamış siparişler iptal edilebilir
+            if (order.OrderStatus != "Hazırlanıyor" && order.OrderStatus != "Sipariş Alındı")
+            {
+                result.Status = false;
+                result.Message = "Bu sipariş kargoya verildiği için iptal edilemez.";
+                return result;
+            }
+
+            // 1. Sipariş durumunu güncelle
+            order.OrderStatus = "İptal Edildi";
+            order.Updated = DateTime.Now;
+            order.IsActive = false;
+            await _orderRepository.UpdateAsync(order);
+
+            // 2. STOKLARI GERİ İADE ET (Kritik İşlem)
+            foreach (var item in order.OrderItems)
+            {
+                item.Product.Stock += item.Quantity;
+                await _productRepository.UpdateAsync(item.Product);
+            }
+
+            result.Status = true;
+            result.Message = "Siparişiniz iptal edildi ve tutar/stok iadesi sağlandı.";
+            return result;
+        }
+
+        [HttpGet("{orderId}")]
+        [Authorize]
+        public IActionResult GetOrderDetails(int orderId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Kullanıcının sadece KENDİ siparişinin detayını görebilmesi için güvenlik kontrolü (userId)
+            var order = _orderRepository.Where(o => o.Id == orderId && o.AppUserId == userId)
+                .Include(o => o.OrderItems)
+                .ThenInclude(oi => oi.Product)
+                .FirstOrDefault();
+
+            if (order == null)
+            {
+                return NotFound("Sipariş bulunamadı veya bu siparişi görüntüleme yetkiniz yok.");
+            }
+
+            return Ok(order);
+        }
     }
 }

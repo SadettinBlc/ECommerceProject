@@ -116,5 +116,83 @@ namespace ECommerce.API.Controllers
             if (product == null) return NotFound();
             return Ok(product);
         }
+
+        [HttpPut]
+        //[Authorize(Roles = "Admin")]
+        public async Task<ResultDto> Update(Product product)
+        {
+            product.Updated = DateTime.Now;
+            await _productRepository.UpdateAsync(product);
+
+            result.Status = true;
+            result.Message = "Ürün başarıyla güncellendi.";
+            return result;
+        }
+
+        [HttpDelete("{id}")]
+        //[Authorize(Roles = "Admin")]
+        public async Task<ResultDto> Delete(int id)
+        {
+            await _productRepository.DeleteAsync(id);
+            result.Status = true;
+            result.Message = "Ürün sistemden silindi.";
+            return result;
+        }
+
+        [HttpGet("{keyword}")]
+        public IActionResult Search(string keyword)
+        {
+            // Ürün adında veya açıklamasında aranan kelime geçen aktif ürünleri getirir
+            var products = _productRepository.Where(p =>
+                (p.Name.Contains(keyword) || p.Description.Contains(keyword)) && p.IsActive)
+                .ToList();
+
+            if (products.Count == 0)
+            {
+                return NotFound("Aradığınız kritere uygun ürün bulunamadı.");
+            }
+
+            return Ok(products);
+        }
+
+        [HttpGet("{categoryId}")]
+        public IActionResult GetByCategory(int categoryId)
+        {
+            var products = _productRepository.Where(p => p.CategoryId == categoryId && p.IsActive).ToList();
+
+            if (products.Count == 0)
+            {
+                return NotFound("Bu kategoride henüz ürün bulunmamaktadır.");
+            }
+
+            return Ok(products);
+        }
+
+        [HttpGet("{categoryId}/{currentProductId}")]
+        public IActionResult GetRelatedProducts(int categoryId, int currentProductId)
+        {
+            // Aynı kategorideki, ama şu an incelediğimiz ürün HARİÇ olan 4 ürünü getir
+            var relatedProducts = _productRepository.Where(p =>
+                p.CategoryId == categoryId &&
+                p.Id != currentProductId &&
+                p.IsActive)
+                .OrderByDescending(p => p.Created)
+                .Take(4)
+                .ToList();
+
+            return Ok(relatedProducts);
+        }
+
+        [HttpGet]
+        public IActionResult GetLatestProducts()
+        {
+            // Veritabanına en son eklenen (tarihe göre azalan) 8 aktif ürünü vitrin için getirir
+            var latestProducts = _productRepository.Where(p => p.IsActive)
+                .OrderByDescending(p => p.Created)
+                .Take(8)
+                .ToList();
+
+            return Ok(latestProducts);
+        }
     }
 }

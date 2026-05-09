@@ -3,6 +3,7 @@ using ECommerce.API.Models;
 using ECommerce.API.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 
 namespace ECommerce.API.Controllers
@@ -55,6 +56,48 @@ namespace ECommerce.API.Controllers
             result.Status = true;
             result.Message = "Ürün favorilere eklendi.";
             return result;
+        }
+
+        [HttpDelete("{productId}")]
+        [Authorize]
+        public async Task<ResultDto> Remove(int productId)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            var favorite = _favoriteRepository.Where(f => f.AppUserId == userId && f.ProductId == productId).FirstOrDefault();
+
+            if (favorite == null)
+            {
+                result.Status = false;
+                result.Message = "Bu ürün zaten favorilerinizde değil.";
+                return result;
+            }
+
+            await _favoriteRepository.DeleteAsync(favorite.Id);
+
+            result.Status = true;
+            result.Message = "Ürün favorilerden çıkarıldı.";
+            return result;
+        }
+
+        [HttpGet]
+        [Authorize]
+        public IActionResult GetMyFavorites()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // Kullanıcının favorilerini ve o favorilere ait ürün detaylarını çekiyoruz
+            var favorites = _favoriteRepository.Where(f => f.AppUserId == userId && f.IsActive)
+                .Include(f => f.Product)
+                .Select(f => f.Product) // Sadece ürün bilgilerini arayüze yolluyoruz
+                .ToList();
+
+            if (favorites.Count == 0)
+            {
+                return NotFound("Henüz favorilere eklediğiniz bir ürün bulunmuyor.");
+            }
+
+            return Ok(favorites);
         }
     }
 }

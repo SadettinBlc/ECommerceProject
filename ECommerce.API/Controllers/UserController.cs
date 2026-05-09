@@ -128,6 +128,7 @@ namespace ECommerce.API.Controllers
             string token = new JwtSecurityTokenHandler().WriteToken(tokenObject);
             return token;
         }
+
         [HttpGet]
         public IActionResult List()
         {
@@ -145,6 +146,97 @@ namespace ECommerce.API.Controllers
             }).ToList();
 
             return Ok(users);
+        }
+
+        [HttpPut]
+        [Authorize]
+        public async Task<ResultDto> UpdateProfile(UpdateProfileDto dto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                result.Status = false;
+                result.Message = "Kullanıcı bulunamadı.";
+                return result;
+            }
+
+            user.FullName = dto.FullName;
+            user.PhoneNumber = dto.PhoneNumber;
+            user.Address = dto.Address;
+            user.Age = dto.Age;
+            user.Gender = dto.Gender;
+
+            var updateResult = await _userManager.UpdateAsync(user);
+
+            if (updateResult.Succeeded)
+            {
+                result.Status = true;
+                result.Message = "Profil bilgileriniz güncellendi.";
+            }
+            else
+            {
+                result.Status = false;
+                result.Message = "Güncelleme başarısız oldu.";
+            }
+
+            return result;
+        }
+
+        [HttpGet]
+        [Authorize]
+        public async Task<IActionResult> GetMyProfile()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                return NotFound("Kullanıcı bulunamadı.");
+            }
+
+            // Sadece arayüzde formları doldurmak için gereken güvenli bilgileri dönüyoruz (Şifre vs. asla dönmez)
+            return Ok(new
+            {
+                user.FullName,
+                user.Email,
+                user.PhoneNumber,
+                user.Address,
+                user.Age,
+                user.Gender,
+                user.PhotoUrl
+            });
+        }
+
+        [HttpPost]
+        [Authorize]
+        public async Task<ResultDto> ChangePassword(ChangePasswordDto dto)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user == null)
+            {
+                result.Status = false;
+                result.Message = "Kullanıcı bulunamadı.";
+                return result;
+            }
+
+            var changePasswordResult = await _userManager.ChangePasswordAsync(user, dto.CurrentPassword, dto.NewPassword);
+
+            if (changePasswordResult.Succeeded)
+            {
+                result.Status = true;
+                result.Message = "Şifreniz başarıyla güncellendi.";
+            }
+            else
+            {
+                result.Status = false;
+                result.Message = "Şifre değiştirme başarısız! Eski şifrenizi yanlış girmiş olabilirsiniz.";
+            }
+
+            return result;
         }
     }
 }
