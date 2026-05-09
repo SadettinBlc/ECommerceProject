@@ -15,5 +15,7 @@ namespace ECommerce.API.Models
 
         public Category Category { get; set; }
         public AppUser User { get; set; }
+        // Product.cs dosyasının içine, diğer ICollection'ların yanına ekle:
+        public ICollection<ProductFeature> ProductFeatures { get; set; }
     }
 }

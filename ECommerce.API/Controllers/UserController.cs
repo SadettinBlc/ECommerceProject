@@ -38,7 +38,10 @@ namespace ECommerce.API.Controllers
                 Email = dto.Email,
                 FullName = dto.FullName,
                 PhoneNumber = dto.PhoneNumber,
-                PhotoUrl = "profil.jpg"
+                PhotoUrl = "profil.jpg",
+                Address = "Belirtilmedi",
+                Age = 0, // Varsayılan yaş
+                Gender = "Belirtilmedi" // Varsayılan cinsiyet
             }, dto.Password);
 
             if (!identityResult.Succeeded)
@@ -124,6 +127,24 @@ namespace ECommerce.API.Controllers
 
             string token = new JwtSecurityTokenHandler().WriteToken(tokenObject);
             return token;
+        }
+        [HttpGet]
+        public IActionResult List()
+        {
+            // Şifreler gelmez, sadece genel kullanıcı bilgileri döner
+            var users = _userManager.Users.Select(u => new {
+                u.Id,
+                u.FullName,
+                u.UserName,
+                u.Email,
+                u.PhoneNumber,
+                u.Address,
+                u.Age,
+                u.Gender,
+                u.PhotoUrl
+            }).ToList();
+
+            return Ok(users);
         }
     }
 }

@@ -11,6 +11,9 @@ namespace ECommerce.API.Models
         public DbSet<OrderItem> OrderItems { get; set; }
         public DbSet<Review> Reviews { get; set; }
         public DbSet<Favorite> Favorites { get; set; }
+        public DbSet<ProductFeature> ProductFeatures { get; set; }
+        public DbSet<Basket> Baskets { get; set; }
+        public DbSet<BasketItem> BasketItems { get; set; }
 
         public AppDbContext(DbContextOptions options) : base(options)
         {
@@ -37,6 +40,12 @@ namespace ECommerce.API.Models
                 .HasOne(o => o.Product)
                 .WithMany()
                 .HasForeignKey(o => o.ProductId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            builder.Entity<BasketItem>()
+                .HasOne(b => b.Product)
+                .WithMany()
+                .HasForeignKey(b => b.ProductId)
                 .OnDelete(DeleteBehavior.Restrict);
         }
     }
