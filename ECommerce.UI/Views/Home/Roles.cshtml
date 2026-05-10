@@ -1,0 +1,211 @@
+﻿@{
+    ViewData["Title"] = "Yetki ve Rol Yönetimi";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-5">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 bg-gradient-primary">
+                <h6 class="m-0 font-weight-bold text-white"><i class="fa fa-plus-circle"></i> Yeni Rol Tanımla</h6>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="font-weight-bold text-dark">Rol İsmi</label>
+                    <input type="text" class="form-control border-left-primary" id="txtRoleName" placeholder="Örn: Admin, Personel, Editor">
+                </div>
+                <button class="btn btn-primary btn-block shadow-sm" id="btnCreateRole">
+                    <i class="fa fa-save"></i> Rolü Sisteme Kaydet
+                </button>
+                <div id="roleCreateResult" class="alert mt-3" style="display:none;"></div>
+            </div>
+        </div>
+        
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Sistemdeki Roller</h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-group" id="listRoles">
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 bg-gradient-warning">
+                <h6 class="m-0 font-weight-bold text-dark"><i class="fa fa-user-tag"></i> Kullanıcı Yetkilendirme</h6>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="font-weight-bold">1. Kullanıcıyı Seçin</label>
+                    <select class="form-control select2" id="cbUsers">
+                        <option value="">Yükleniyor...</option>
+                    </select>
+                    <div id="userRolesDiv" class="mt-2 p-2 border rounded bg-light" style="display:none;">
+                        <span class="font-weight-bold text-secondary" style="font-size:13px;">Mevcut Yetkileri: </span>
+                        <span id="userRolesList"></span>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="font-weight-bold">2. Rolü Seçin</label>
+                    <select class="form-control" id="cbRoles">
+                        <option value="">Yükleniyor...</option>
+                    </select>
+                </div>
+                <hr>
+                <div class="row">
+                    <div class="col-6">
+                        <button class="btn btn-success btn-block font-weight-bold shadow-sm" id="btnAssignRole">
+                            <i class="fa fa-check"></i> Yetkiyi Ver
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <button class="btn btn-danger btn-block font-weight-bold shadow-sm" id="btnRemoveRole">
+                            <i class="fa fa-times"></i> Yetkiyi Geri Al
+                        </button>
+                    </div>
+                </div>
+                <div id="assignResult" class="alert mt-3" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var apiBaseUrl = "@ViewBag.ApiBaseURL";
+            var token = localStorage.getItem("token");
+
+            function LoadUsers() {
+                $.ajax({
+                    url: apiBaseUrl + "/User/List", type: "GET", headers: { "Authorization": "Bearer " + token },
+                    success: function (d) {
+                        var users = d.data || d;
+                        $("#cbUsers").empty().append('<option value="">-- Yetkilendirilecek Kullanıcı --</option>');
+                        $.each(users, function (i, u) {
+                            var uName = u.userName || u.UserName;
+                            $("#cbUsers").append('<option value="' + uName + '">' + uName + ' (' + (u.fullName || u.FullName) + ')</option>');
+                        });
+                    }
+                });
+            }
+
+            function LoadRoles() {
+                $.ajax({
+                    url: apiBaseUrl + "/Role/List", type: "GET", headers: { "Authorization": "Bearer " + token },
+                    success: function (d) {
+                        var roles = d.data || d;
+                        $("#cbRoles, #listRoles").empty();
+                        $("#cbRoles").append('<option value="">-- Rol Seçin --</option>');
+                        
+                        $.each(roles, function (i, r) {
+                            var rName = r.name || r.Name;
+                            $("#cbRoles").append('<option value="' + rName + '">' + rName + '</option>');
+                            
+                            var listItem = '<li class="list-group-item d-flex justify-content-between align-items-center">' + rName +
+                                           '<button class="btn btn-sm btn-danger btnDeleteRole" data-name="' + rName + '"><i class="fa fa-trash"></i></button></li>';
+                            $("#listRoles").append(listItem);
+                        });
+                    }
+                });
+            }
+
+            LoadUsers();
+            LoadRoles();
+
+            $("#cbUsers").change(function () {
+                var uName = $(this).val();
+                if(!uName) {
+                    $("#userRolesDiv").hide();
+                    return;
+                }
+                LoadUserRoles(uName);
+            });
+
+            function LoadUserRoles(userName) {
+                $.ajax({
+                    url: apiBaseUrl + "/Role/GetUserRoles/" + userName,
+                    type: "GET",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (roles) {
+                        $("#userRolesList").empty();
+                        
+                        if(roles && roles.length > 0) {
+                            $.each(roles, function(i, r) {
+                                $("#userRolesList").append('<span class="badge badge-success mr-1 p-2">' + r + '</span>');
+                            });
+                        } else {
+                            $("#userRolesList").append('<span class="badge badge-secondary p-2">Hiçbir yetkisi yok</span>');
+                        }
+                        
+                        $("#userRolesDiv").fadeIn();
+                    }
+                });
+            }
+
+            $("#btnCreateRole").click(function () {
+                var name = $("#txtRoleName").val();
+                if(!name) return;
+                $.ajax({
+                    url: apiBaseUrl + "/Role/CreateRole?roleName=" + name, type: "POST", headers: { "Authorization": "Bearer " + token },
+                    success: function (d) {
+                        var cls = d.status ? "alert-success" : "alert-danger";
+                        $("#roleCreateResult").show().removeClass().addClass("alert " + cls).html(d.message).fadeOut(4000);
+                        if(d.status) { $("#txtRoleName").val(""); LoadRoles(); }
+                    }
+                });
+            });
+
+            $(document).on("click", ".btnDeleteRole", function () {
+                var rName = $(this).data("name");
+                if(confirm("'" + rName + "' rolünü tamamen silmek istediğinize emin misiniz?")) {
+                    $.ajax({
+                        url: apiBaseUrl + "/Role/DeleteRole/" + rName,
+                        type: "DELETE", headers: { "Authorization": "Bearer " + token },
+                        success: function (d) {
+                            alert(d.message);
+                            if(d.status) { LoadRoles(); }
+                        }
+                    });
+                }
+            });
+
+            $("#btnAssignRole").click(function () {
+                var uName = $("#cbUsers").val();
+                var rName = $("#cbRoles").val();
+                if(!uName || !rName) { alert("Lütfen kullanıcı ve rol seçin!"); return; }
+
+                $.ajax({
+                    url: apiBaseUrl + "/Role/AssignRoleToUser?userName=" + uName + "&roleName=" + rName,
+                    type: "POST", headers: { "Authorization": "Bearer " + token },
+                    success: function (d) {
+                        var cls = d.status ? "alert-success" : "alert-danger";
+                        $("#assignResult").show().removeClass().addClass("alert " + cls).html(d.message).fadeOut(4000);
+                        if(d.status) { LoadUserRoles(uName); } // BAŞARILIYSA ROLLERİ GÜNCELLE
+                    }
+                });
+            });
+
+            $("#btnRemoveRole").click(function () {
+                var uName = $("#cbUsers").val();
+                var rName = $("#cbRoles").val();
+                if(!uName || !rName) { alert("Lütfen kullanıcı ve rol seçin!"); return; }
+
+                if(confirm(uName + " kullanıcısından " + rName + " yetkisini almak istiyor musunuz?")) {
+                    $.ajax({
+                        url: apiBaseUrl + "/Role/RemoveRoleFromUser?userName=" + uName + "&roleName=" + rName,
+                        type: "POST", headers: { "Authorization": "Bearer " + token },
+                        success: function (d) {
+                            var cls = d.status ? "alert-success" : "alert-danger";
+                            $("#assignResult").show().removeClass().addClass("alert " + cls).html(d.message).fadeOut(4000);
+                            if(d.status) { LoadUserRoles(uName); } // BAŞARILIYSA ROLLERİ GÜNCELLE
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

@@ -1,0 +1,209 @@
+﻿@{
+    ViewData["Title"] = "Checkout";
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12 border-bottom border-secondary pb-2">
+        <h2 class="font-weight-bold text-light m-0"><i class="fas fa-lock text-success"></i> Secure Checkout</h2>
+    </div>
+</div>
+
+<div class="row" id="checkoutContent" style="display:none;">
+    <div class="col-lg-8 mb-4">
+        
+        <div class="card card-custom shadow p-4 mb-4">
+            <h4 class="text-light font-weight-bold mb-4"><i class="fas fa-shipping-fast text-custom"></i> Shipping Details</h4>
+            <div class="form-group">
+                <label class="text-muted font-weight-bold">Full Delivery Address</label>
+                <textarea class="form-control bg-dark text-light border-secondary" id="txtAddress" rows="3" placeholder="Enter your street, neighborhood, city and postal code..."></textarea>
+            </div>
+        </div>
+
+        <div class="card card-custom shadow p-4">
+            <h4 class="text-light font-weight-bold mb-4"><i class="fas fa-credit-card text-custom"></i> Payment Information</h4>
+            <div class="row">
+                <div class="col-md-12 form-group">
+                    <label class="text-muted font-weight-bold">Card Holder Name</label>
+                    <input type="text" class="form-control bg-dark text-light border-secondary" id="txtName" placeholder="JOHN DOE">
+                </div>
+                <div class="col-md-12 form-group">
+                    <label class="text-muted font-weight-bold">Card Number</label>
+                    <input type="text" class="form-control bg-dark text-light border-secondary font-weight-bold text-warning" id="txtCard" maxlength="16" placeholder="1234567890123456">
+                    <small class="text-muted">Must be exactly 16 digits.</small>
+                </div>
+                <div class="col-md-6 form-group">
+                    <label class="text-muted font-weight-bold">Expiration Date</label>
+                    <input type="text" class="form-control bg-dark text-light border-secondary" id="txtExp" maxlength="5" placeholder="MM/YY">
+                </div>
+                <div class="col-md-6 form-group">
+                    <label class="text-muted font-weight-bold">CVV</label>
+                    <input type="password" class="form-control bg-dark text-light border-secondary" id="txtCvv" maxlength="3" placeholder="***">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card card-custom shadow p-4 sticky-top" style="top: 20px;">
+            <h4 class="font-weight-bold text-light border-bottom border-secondary pb-3 mb-4">Order Summary</h4>
+            
+            <div class="d-flex justify-content-between mb-3">
+                <span class="text-muted" style="font-size: 1.1rem;">Subtotal</span>
+                <span class="text-light font-weight-bold" style="font-size: 1.1rem;" id="summarySubtotal">₺0.00</span>
+            </div>
+            
+            <hr class="border-secondary mb-3">
+            
+            <label class="text-muted font-weight-bold">Discount Code</label>
+            <div class="input-group mb-2">
+                <input type="text" class="form-control bg-dark text-light border-secondary" id="txtCoupon" placeholder="Enter code (e.g. SADO10)">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-warning font-weight-bold" type="button" id="btnApplyCoupon">Apply</button>
+                </div>
+            </div>
+            <div id="couponMsg" class="text-success font-weight-bold mb-3" style="display:none; font-size: 0.9rem;"></div>
+            
+            <hr class="border-secondary mb-4">
+            
+            <div class="d-flex justify-content-between mb-4">
+                <span class="text-light font-weight-bold" style="font-size: 1.3rem;">Total Pay</span>
+                <span class="text-custom font-weight-bold" style="font-size: 1.5rem;" id="summaryTotal">₺0.00</span>
+            </div>
+
+            <button class="btn btn-success btn-lg btn-block font-weight-bold shadow-sm" id="btnPlaceOrder">
+                <i class="fas fa-check-circle"></i> Place Order
+            </button>
+            <div id="orderResult" class="mt-3 text-center font-weight-bold" style="display:none; font-size: 1rem;"></div>
+        </div>
+    </div>
+</div>
+
+<div class="row" id="emptyCheckoutState" style="display:none;">
+    <div class="col-12 text-center mt-5">
+        <div class="p-5 card-custom rounded shadow">
+            <h3 class="text-light font-weight-bold mb-3">No Items to Checkout</h3>
+            <p class="text-muted mb-4">Your basket is empty. Add some products before checking out.</p>
+            <a href="/Home/MainPage" class="btn btn-warning font-weight-bold px-5">Go to Store</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var apiBaseUrl = "@ViewBag.ApiBaseURL";
+            var token = localStorage.getItem("token");
+            var rawTotal = 0; // İndirimsiz ham tutarı hafızada tutacağız
+            var isCouponApplied = false;
+
+            if (!token) { window.location.replace("/Login"); return; }
+
+            // 1. SEPET TUTARINI ÇEK VE ÖZETİ DOLDUR
+            $.ajax({
+                url: apiBaseUrl + "/Basket/GetMyBasket",
+                type: "GET",
+                headers: { "Authorization": "Bearer " + token },
+                success: function (d) {
+                    var items = d.basketItems || d.BasketItems || [];
+                    if (items.length === 0) {
+                        $("#emptyCheckoutState").show();
+                        return;
+                    }
+
+                    $.each(items, function (i, item) {
+                        var pPrice = item.product.price || item.Product.Price;
+                        var quantity = item.quantity || item.Quantity;
+                        rawTotal += (pPrice * quantity);
+                    });
+
+                    $("#summarySubtotal").text("₺" + rawTotal.toFixed(2));
+                    $("#summaryTotal").text("₺" + rawTotal.toFixed(2));
+                    $("#checkoutContent").fadeIn();
+                },
+                error: function() { $("#emptyCheckoutState").show(); }
+            });
+
+            // 2. KUPON UYGULAMA (Görsel olarak SADO10 indirimi)
+            $("#btnApplyCoupon").click(function() {
+                var code = $("#txtCoupon").val().trim().toUpperCase();
+                
+                if(isCouponApplied) { return; } // Zaten uygulandıysa çık
+
+                if(code === "SADO10") {
+                    var discountedTotal = rawTotal * 0.90;
+                    $("#summaryTotal").text("₺" + discountedTotal.toFixed(2));
+                    $("#couponMsg").text("SADO10 Applied! 10% Discount.").removeClass("text-danger").addClass("text-success").show();
+                    isCouponApplied = true;
+                    $("#txtCoupon").prop("readonly", true);
+                    $(this).prop("disabled", true);
+                } else {
+                    $("#couponMsg").text("Invalid coupon code!").removeClass("text-success").addClass("text-danger").show();
+                }
+            });
+
+            // Sadece sayı girilmesini sağla (Kart ve CVV için)
+            $('#txtCard, #txtCvv').on('input', function() { this.value = this.value.replace(/[^0-9]/g, ''); });
+
+            // 3. SİPARİŞİ OLUŞTUR (API'YE POST)
+            $("#btnPlaceOrder").click(function() {
+                var address = $("#txtAddress").val();
+                var name = $("#txtName").val();
+                var card = $("#txtCard").val();
+                var exp = $("#txtExp").val();
+                var cvv = $("#txtCvv").val();
+                var coupon = $("#txtCoupon").val();
+
+                if(!address || !name || !card || !exp || !cvv) {
+                    $("#orderResult").removeClass().addClass("mt-3 text-center font-weight-bold text-danger").text("Please fill in all fields!").show();
+                    return;
+                }
+
+                if(card.length !== 16) {
+                    $("#orderResult").removeClass().addClass("mt-3 text-center font-weight-bold text-danger").text("Card number must be 16 digits!").show();
+                    return;
+                }
+
+                var btn = $(this);
+                btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i> Processing Payment...');
+
+                var orderDto = {
+                    ShippingAddress: address,
+                    CardHolderName: name,
+                    CardNumber: card,
+                    ExpirationDate: exp,
+                    Cvv: cvv,
+                    CouponCode: coupon
+                };
+
+                $.ajax({
+                    url: apiBaseUrl + "/Order/CreateOrderFromBasket",
+                    type: "POST",
+                    contentType: "application/json",
+                    data: JSON.stringify(orderDto),
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function(d) {
+                        if(d.status) {
+                            $("#orderResult").removeClass().addClass("mt-3 text-center font-weight-bold text-success").text(d.message).show();
+                            btn.html('<i class="fas fa-check-circle"></i> Payment Successful');
+                            
+                            // Üstteki sepet rozetini sıfırla
+                            if(typeof window.UpdateCartCount === "function") window.UpdateCartCount();
+
+                            // 2 saniye sonra ana sayfaya (veya siparişlerim sayfasına) yönlendir
+                            setTimeout(function() { window.location.replace("/Home/MainPage"); }, 2500);
+                        } else {
+                            $("#orderResult").removeClass().addClass("mt-3 text-center font-weight-bold text-danger").text(d.message).show();
+                            btn.prop("disabled", false).html('<i class="fas fa-check-circle"></i> Place Order');
+                        }
+                    },
+                    error: function() {
+                        $("#orderResult").removeClass().addClass("mt-3 text-center font-weight-bold text-danger").text("Connection error during payment!").show();
+                        btn.prop("disabled", false).html('<i class="fas fa-check-circle"></i> Place Order');
+                    }
+                });
+            });
+
+        });
+    </script>
+}

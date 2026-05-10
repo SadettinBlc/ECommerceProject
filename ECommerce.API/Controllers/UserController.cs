@@ -162,15 +162,15 @@ namespace ECommerce.API.Controllers
                 return result;
             }
 
+            // ALANLARI AYRI AYRI GÜNCELLİYORUZ
             user.FullName = dto.FullName;
-            user.Email = dto.Email;
-            user.UserName = dto.Email; // Girişte email kullanıldığı için kullanıcı adını da güncelliyoruz
+            user.UserName = dto.UserName; // Kullanıcı adı artık özgür
+            user.Email = dto.Email;       // E-posta artık özgür
             user.PhoneNumber = dto.PhoneNumber;
             user.Address = dto.Address;
             user.Age = dto.Age;
             user.Gender = dto.Gender;
 
-            // RESİM YENİDEN YÜKLENMİŞSE (BOŞ DEĞİLSE) VERİTABANINDA GÜNCELLE
             if (!string.IsNullOrEmpty(dto.PhotoUrl)) { user.PhotoUrl = dto.PhotoUrl; }
 
             var updateResult = await _userManager.UpdateAsync(user);
@@ -178,12 +178,12 @@ namespace ECommerce.API.Controllers
             if (updateResult.Succeeded)
             {
                 result.Status = true;
-                result.Message = "Profil bilgileriniz güncellendi.";
+                result.Message = "Profil bilgileriniz başarıyla güncellendi.";
             }
             else
             {
                 result.Status = false;
-                result.Message = "Güncelleme başarısız oldu.";
+                result.Message = "Güncelleme sırasında bir hata oluştu.";
             }
 
             return result;
@@ -205,6 +205,7 @@ namespace ECommerce.API.Controllers
             return Ok(new
             {
                 user.FullName,
+                user.UserName,
                 user.Email,
                 user.PhoneNumber,
                 user.Address,

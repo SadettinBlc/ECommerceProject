@@ -1,11 +1,8 @@
 ﻿<!DOCTYPE html>
 <html lang="en">
-
 <head>
-
     <script>
-            // GÜVENLİK DUVARI: Bilet (Token) yoksa sayfayı anında Login'e yönlendir
-            if (!localStorage.getItem("token") && window.location.pathname.toLowerCase().indexOf("/login") === -1) {
+            if (!localStorage.getItem("token") && window.location.pathname.toLowerCase().indexOf("/login") === -1 && window.location.pathname.toLowerCase().indexOf("/register") === -1) {
                 window.location.replace("/Login");
             }
     </script>
@@ -13,20 +10,12 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <meta name="description" content="">
-    <meta name="author" content="">
-
     <title>E-Ticaret Admin Paneli</title>
 
     <link href="~/sbadmin/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
-    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i"
-          rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i" rel="stylesheet">
     <link href="~/sbadmin/css/sb-admin-2.min.css" rel="stylesheet">
-
-
 </head>
-
 <body id="page-top">
 
     <div id="wrapper">
@@ -43,21 +32,42 @@
             <hr class="sidebar-divider my-0">
 
             <li class="nav-item">
-                <a class="nav-link" asp-action="Index">
+                <a class="nav-link" asp-action="Index" asp-controller="Home">
                     <i class="fas fa-fw fa-tachometer-alt"></i>
                     <span>Ana Sayfa</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" asp-action="Categories">
+                <a class="nav-link" asp-action="Categories" asp-controller="Home">
                     <i class="fas fa-fw fa-list"></i>
                     <span>Kategoriler</span>
                 </a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" asp-action="Products">
+                <a class="nav-link" asp-action="Products" asp-controller="Home">
                     <i class="fas fa-fw fa-box"></i>
                     <span>Ürünler</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/Home/AdminOrders">
+                    <i class="fas fa-fw fa-shopping-bag"></i>
+                    <span>Siparişler</span>
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link" href="/Home/Roles">
+                    <i class="fas fa-fw fa-user-shield"></i>
+                    <span>Rol Yönetimi</span>
+                </a>
+            </li>
+            
+            <hr class="sidebar-divider d-none d-md-block">
+
+            <li class="nav-item">
+                <a class="nav-link text-warning font-weight-bold" href="/Home/MainPage">
+                    <i class="fas fa-fw fa-store"></i>
+                    <span>Mağazaya Dön</span>
                 </a>
             </li>
 
@@ -68,6 +78,7 @@
             </div>
 
         </ul>
+        
         <div id="content-wrapper" class="d-flex flex-column">
 
             <div id="content">
@@ -92,14 +103,11 @@
                         </li>
 
                         <li class="nav-item dropdown no-arrow Logined">
-                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button"
-                                   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                                 <span class="mr-2 d-none d-lg-inline text-gray-600 small font-weight-bold" id="UserName">Yükleniyor...</span>
-                                <img class="img-profile rounded-circle"
-                                     id="ImgUserPhoto" src="/images/profil.jpg" style="object-fit:cover;">
+                                <img class="img-profile rounded-circle" id="ImgUserPhoto" src="/images/profil.jpg" style="object-fit:cover;">
                             </a>
-                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in"
-                                 aria-labelledby="userDropdown">
+                            <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in" aria-labelledby="userDropdown">
                                 <a class="dropdown-item" href="/Home/Profile">
                                     <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"></i>
                                     Profil Güncelle
@@ -123,7 +131,7 @@
             <footer class="sticky-footer bg-white">
                 <div class="container my-auto">
                     <div class="copyright text-center my-auto">
-                        <span>Copyright &copy; E-Ticaret Hackathon 2026</span>
+                        <span>Copyright &copy; E-Ticaret 2026</span>
                     </div>
                 </div>
             </footer>
@@ -133,8 +141,7 @@
         <i class="fas fa-angle-up"></i>
     </a>
 
-    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
-         aria-hidden="true">
+    <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
         <div class="modal-dialog" role="document">
             <div class="modal-content">
                 <div class="modal-header bg-danger text-white">
@@ -154,14 +161,11 @@
 
     <script src="~/sbadmin/vendor/jquery/jquery.min.js"></script>
     <script src="~/sbadmin/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
-
     <script src="~/sbadmin/vendor/jquery-easing/jquery.easing.min.js"></script>
-
     <script src="~/sbadmin/js/sb-admin-2.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
     
     <script>
-            // Token'ı çözen ve içindeki gizli verileri okuyan fonksiyon
             function parseJwt(token) {
                 try {
                     var base64Url = token.split('.')[1];
@@ -175,33 +179,47 @@
 
             $(document).ready(function () {
                 var token = localStorage.getItem("token");
-            
+        
                 if (token) {
-                    // Token varsa butonları ayarla
-                    $(".NotLogined").hide();
-                    $(".Logined").show();
-
-                    // Token'ın içindeki verileri çöz ve sağ üst köşeye bas
                     var decoded = parseJwt(token);
                     if (decoded) {
-                        var userName = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "Kullanıcı";
                         var userRole = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || "Üye";
+
+                        // ==========================================
+                        // YENİ GÜVENLİK DUVARI: SADECE ADMİNLER GİREBİLİR
+                        // ==========================================
+                        var isAdmin = false;
+                        if (Array.isArray(userRole)) {
+                            isAdmin = userRole.includes("Admin");
+                        } else {
+                            isAdmin = (userRole === "Admin");
+                        }
+
+                        if (!isAdmin) {
+                            alert("Erişim Engellendi: Admin paneline girmek için yetkiniz bulunmuyor!");
+                            window.location.replace("/Home/MainPage"); // Kullanıcıysa mağazaya at
+                            return;
+                        }
+                        // ==========================================
+
+                        $(".NotLogined").hide();
+                        $(".Logined").show();
+
+                        var userName = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"] || "Kullanıcı";
                         var userPhoto = decoded["UserPhoto"] || "profil.jpg";
 
                         $("#UserName").text(userName);
-                        $("#divRole").text(userRole);
+                    
+                        $("#divRole").text(Array.isArray(userRole) ? userRole.join(", ") : userRole);
 
-                        // API'miz 7073 portunda çalıştığı için resim yolunu ona göre ayarlıyoruz.
-                        var imgUrl = "https://localhost:7073/" + userPhoto.replace(/\\/g, '/');
+                        var imgUrl = "https://localhost:7073/" + userPhoto.replace(/\\/g, '/'); // API Portuna dikkat et
                         $("#ImgUserPhoto").attr("src", imgUrl);
                     }
                 } else {
-                    // Token yoksa giriş butonunu göster
                     $(".NotLogined").show();
                     $(".Logined").hide();
                 }
 
-                // Çıkış Yap İşlemi
                 $("#Logout").click(function () {
                     localStorage.removeItem("token");
                     location.href = "/Login";
@@ -211,5 +229,4 @@
     
     @await RenderSectionAsync("Scripts", required: false)
 </body>
-
 </html>

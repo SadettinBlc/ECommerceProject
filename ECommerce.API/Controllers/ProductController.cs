@@ -21,18 +21,49 @@ namespace ECommerce.API.Controllers
             _productRepository = productRepository;
             _featureRepository = featureRepository;
         }
-
+        // 1. GÜNCELLENMİŞ LİSTELEME METODU (Özellik filtresi eklendi)
         [HttpGet]
-        public IActionResult List(int page = 1, int pageSize = 10)
+        public IActionResult List(int page = 1, int pageSize = 20, string search = "", int? categoryId = null, string sortBy = "", [FromQuery] string features = "")
         {
-            var query = _productRepository.Where(p => true)
+            var query = _productRepository.Where(p => p.IsActive)
                                           .Include(p => p.Category)
-                                          .Include(p => p.ProductFeatures);
+                                          .Include(p => p.ProductFeatures)
+                                          .AsQueryable();
+
+            if (!string.IsNullOrEmpty(search))
+            {
+                var s = search.ToLower();
+                query = query.Where(p => p.Name.ToLower().Contains(s) ||
+                                        (p.Description != null && p.Description.ToLower().Contains(s)));
+            }
+
+            if (categoryId.HasValue && categoryId.Value > 0)
+            {
+                query = query.Where(p => p.CategoryId == categoryId.Value);
+            }
+
+            // ÖZELLİK FİLTRELEMESİ (Örn: "16GB RAM,RTX 4060" geldiyse parçala ve filtrele)
+            if (!string.IsNullOrEmpty(features))
+            {
+                var featureList = features.Split(',').Select(f => f.Trim().ToLower()).ToList();
+                foreach (var f in featureList)
+                {
+                    // Ürünün özelliklerinden EN AZ BİRİ seçilen özelliğe eşitse o ürünü listede tut
+                    query = query.Where(p => p.ProductFeatures.Any(pf => pf.FeatureValue.ToLower() == f));
+                }
+            }
+
+            switch (sortBy)
+            {
+                case "price_asc": query = query.OrderBy(p => p.Price); break;
+                case "price_desc": query = query.OrderByDescending(p => p.Price); break;
+                case "name_asc": query = query.OrderBy(p => p.Name); break;
+                case "name_desc": query = query.OrderByDescending(p => p.Name); break;
+                default: query = query.OrderByDescending(p => p.Created); break;
+            }
 
             int totalCount = query.Count();
-            var products = query.OrderByDescending(p => p.Created)
-                                .Skip((page - 1) * pageSize)
-                                .Take(pageSize).ToList();
+            var products = query.Skip((page - 1) * pageSize).Take(pageSize).ToList();
 
             var result = new PagedResultDto<Product>
             {
@@ -43,6 +74,26 @@ namespace ECommerce.API.Controllers
                 PageSize = pageSize
             };
             return Ok(result);
+        }
+
+        // 2. YENİ EKLENEN METOT: Seçilen kategorinin özelliklerini gruplayarak getirir
+        [HttpGet("{categoryId}")]
+        public IActionResult GetCategoryFeatures(int categoryId)
+        {
+            // O kategoriye ait ürünlerin özelliklerini alıp, benzersiz olanları ayıklıyoruz
+            var rawFeatures = _featureRepository.Where(f => f.Product.CategoryId == categoryId && f.Product.IsActive)
+                                             .Select(f => new { f.FeatureName, f.FeatureValue })
+                                             .Distinct()
+                                             .ToList();
+
+            // "RAM" başlığı altına ["16GB", "32GB"] şeklinde grupluyoruz
+            var groupedFeatures = rawFeatures.GroupBy(f => f.FeatureName)
+                                             .Select(g => new {
+                                                 Name = g.Key,
+                                                 Values = g.Select(x => x.FeatureValue).ToList()
+                                             }).ToList();
+
+            return Ok(groupedFeatures);
         }
 
         [HttpGet("{categoryId}")]
@@ -82,7 +133,7 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = "Admin")] // KİLİT EKLENDİ
         public async Task<ResultDto> Add(ProductAddDto dto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -97,7 +148,7 @@ namespace ECommerce.API.Controllers
                 UserId = userId,
                 Created = DateTime.Now,
                 Updated = DateTime.Now,
-                IsActive = true // DTO'da yok, yeni eklendiği için aktif yapıyoruz
+                IsActive = true
             };
             await _productRepository.AddAsync(newProduct);
             result.Status = true;
@@ -106,6 +157,7 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "Admin")] // KİLİT EKLENDİ
         public async Task<ResultDto> Update(ProductUpdateDto dto)
         {
             var product = _productRepository.Where(p => p.Id == dto.Id).FirstOrDefault();
@@ -122,7 +174,7 @@ namespace ECommerce.API.Controllers
             product.Stock = dto.Stock;
             product.CategoryId = dto.CategoryId;
             if (!string.IsNullOrEmpty(dto.PhotoUrl)) { product.PhotoUrl = dto.PhotoUrl; }
-            product.IsActive = dto.IsActive; // Update DTO'sunda var
+            product.IsActive = dto.IsActive;
             product.Updated = DateTime.Now;
 
             await _productRepository.UpdateAsync(product);
@@ -132,6 +184,7 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")] // KİLİT EKLENDİ
         public async Task<ResultDto> Delete(int id)
         {
             await _productRepository.DeleteAsync(id);
@@ -141,14 +194,14 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpPost]
-        [Authorize]
+        [Authorize(Roles = "Admin")] // KİLİT EKLENDİ
         public async Task<ResultDto> AddFeature(ProductFeatureAddDto dto)
         {
             var newFeature = new ProductFeature
             {
                 ProductId = dto.ProductId,
-                FeatureName = dto.FeatureName,  // Senin DTO'ndaki isimlendirme
-                FeatureValue = dto.FeatureValue, // Senin DTO'ndaki isimlendirme
+                FeatureName = dto.FeatureName,
+                FeatureValue = dto.FeatureValue,
                 Created = DateTime.Now,
                 Updated = DateTime.Now,
                 IsActive = true
@@ -160,7 +213,7 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpDelete("{featureId}")]
-        [Authorize]
+        [Authorize(Roles = "Admin")] // KİLİT EKLENDİ
         public async Task<ResultDto> DeleteFeature(int featureId)
         {
             var feature = _featureRepository.Where(f => f.Id == featureId).FirstOrDefault();

@@ -45,6 +45,7 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpPost]
+        [Authorize(Roles = "Admin")] // KİLİT EKLENDİ
         public async Task<ResultDto> Add(CategoryAddDto dto)
         {
             var newCategory = new Category
@@ -52,7 +53,7 @@ namespace ECommerce.API.Controllers
                 Name = dto.Name,
                 Created = DateTime.Now,
                 Updated = DateTime.Now,
-                IsActive = true // DTO'da olmadığı için varsayılan olarak Aktif yapıyoruz
+                IsActive = true
             };
 
             await _categoryRepository.AddAsync(newCategory);
@@ -63,6 +64,7 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpPut]
+        [Authorize(Roles = "Admin")] // KİLİT EKLENDİ
         public async Task<ResultDto> Update(CategoryUpdateDto dto)
         {
             var category = _categoryRepository.Where(c => c.Id == dto.Id).FirstOrDefault();
@@ -74,7 +76,7 @@ namespace ECommerce.API.Controllers
             }
 
             category.Name = dto.Name;
-            category.IsActive = dto.IsActive; // Update DTO'sunda var, sorun yok
+            category.IsActive = dto.IsActive;
             category.Updated = DateTime.Now;
 
             await _categoryRepository.UpdateAsync(category);
@@ -85,6 +87,7 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")] // KİLİT EKLENDİ
         public async Task<ResultDto> Delete(int id)
         {
             await _categoryRepository.DeleteAsync(id);

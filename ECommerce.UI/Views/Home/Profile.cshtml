@@ -18,6 +18,11 @@
                 </div>
 
                 <div class="form-group">
+                    <label class="font-weight-bold">Kullanıcı Adı</label>
+                    <input type="text" class="form-control" id="txtUserName">
+                </div>
+                
+                <div class="form-group">
                     <label class="font-weight-bold">E-Posta Adresi</label>
                     <input type="email" class="form-control" id="txtEmail">
                 </div>
@@ -91,6 +96,7 @@
                     success: function (d) {
                         var p = d.data || d;
                         
+                        $("#txtUserName").val(p.userName || p.UserName); // KULLANICI ADI ÇEKİLDİ
                         $("#txtEmail").val(p.email || p.Email);
                         $("#txtFullName").val(p.fullName || p.FullName);
                         $("#txtPhone").val(p.phoneNumber || p.PhoneNumber);
@@ -102,9 +108,8 @@
                         var photo = p.photoUrl || p.PhotoUrl;
                         if(photo) {
                             if(photo === "profil.jpg") {
-                                $("#profilePicture").attr("src", "/images/profil.jpg"); // UI'daki varsayılan resim
+                                $("#profilePicture").attr("src", "/images/profil.jpg");
                             } else {
-                                // API'den gelen gerçek resmi göster
                                 var photoLink = apiBaseUrl.replace('/api', '') + "/" + photo.replace(/\\/g, '/');
                                 $("#profilePicture").attr("src", photoLink);
                             }
@@ -113,7 +118,6 @@
                 });
             }
 
-            // Sayfa açılışında çalıştır
             GetProfile();
 
             $("#profilePicture").click(function(){ $("#fileProfileImage").click(); });
@@ -151,7 +155,8 @@
             $("#btnUpdateProfile").click(function () {
                 var dto = {
                     fullName: $("#txtFullName").val(),
-                    email: $("#txtEmail").val(), // E-posta eklendi
+                    userName: $("#txtUserName").val(), // KULLANICI ADI EKLENDİ
+                    email: $("#txtEmail").val(),
                     phoneNumber: $("#txtPhone").val(),
                     address: $("#txtAddress").val(),
                     age: parseInt($("#txtAge").val()) || 0,
@@ -170,9 +175,8 @@
                         $("#profileResult").show().removeClass().addClass("alert " + cls).html(d.message).fadeOut(4000);
                         
                         if(d.status) {
-                             // E-posta değiştiyse token geçersiz kalabilir diye tekrar login olmak en sağlıklısıdır.
                              setTimeout(function() {
-                                alert("Bilgileriniz güncellendi! E-posta veya resim değişikliğinin tam yansıması için lütfen tekrar giriş yapın.");
+                                alert("Bilgileriniz güncellendi! E-posta veya Kullanıcı Adı değişikliğinin tam yansıması için lütfen tekrar giriş yapın.");
                                 localStorage.removeItem("token");
                                 location.href = "/Login";
                              }, 2000);

@@ -8,7 +8,7 @@ namespace ECommerce.API.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    [Authorize(Roles = "Admin")] // Sadece adminler rol dağıtabilir
+    [Authorize(Roles = "Admin")] // TAM KORUMA EKLENDİ! Artık sadece Adminler rol dağıtabilir.
     public class RoleController : ControllerBase
     {
         private readonly RoleManager<AppRole> _roleManager;
@@ -19,6 +19,13 @@ namespace ECommerce.API.Controllers
         {
             _roleManager = roleManager;
             _userManager = userManager;
+        }
+
+        [HttpGet]
+        public IActionResult List()
+        {
+            var roles = _roleManager.Roles.Select(r => new { r.Id, r.Name }).ToList();
+            return Ok(roles);
         }
 
         [HttpPost]
@@ -34,7 +41,7 @@ namespace ECommerce.API.Controllers
                 return result;
             }
             result.Status = false;
-            result.Message = "Bu rol zaten mevcut!";
+            result.Message = "Bu rol zaten sistemde mevcut!";
             return result;
         }
 
@@ -53,14 +60,97 @@ namespace ECommerce.API.Controllers
             if (!roleExist)
             {
                 result.Status = false;
-                result.Message = "Böyle bir rol yok. Önce rolü oluşturun.";
+                result.Message = "Böyle bir rol bulunamadı.";
                 return result;
             }
 
-            await _userManager.AddToRoleAsync(user, roleName);
-            result.Status = true;
-            result.Message = $"'{roleName}' yetkisi {userName} kullanıcısına başarıyla atandı.";
+            var addResult = await _userManager.AddToRoleAsync(user, roleName);
+            if (addResult.Succeeded)
+            {
+                result.Status = true;
+                result.Message = $"'{roleName}' yetkisi {userName} kullanıcısına başarıyla tanımlandı.";
+            }
+            else
+            {
+                result.Status = false;
+                result.Message = "Rol atama sırasında bir hata oluştu.";
+            }
             return result;
+        }
+        
+        // 1. Rolü Tamamen Silme
+        [HttpDelete("{roleName}")]
+        public async Task<ResultDto> DeleteRole(string roleName)
+        {
+            var role = await _roleManager.FindByNameAsync(roleName);
+            if (role == null)
+            {
+                result.Status = false;
+                result.Message = "Silinecek rol bulunamadı.";
+                return result;
+            }
+
+            var deleteResult = await _roleManager.DeleteAsync(role);
+            if (deleteResult.Succeeded)
+            {
+                result.Status = true;
+                result.Message = "Rol sistemden başarıyla silindi.";
+            }
+            else
+            {
+                result.Status = false;
+                result.Message = "Rol silinirken bir hata oluştu (Kullanımda olabilir).";
+            }
+            return result;
+        }
+
+        // 2. Kullanıcıdan Rolü Geri Alma
+        [HttpPost]
+        public async Task<ResultDto> RemoveRoleFromUser(string userName, string roleName)
+        {
+            var user = await _userManager.FindByNameAsync(userName);
+            if (user == null)
+            {
+                result.Status = false;
+                result.Message = "Kullanıcı bulunamadı.";
+                return result;
+            }
+
+            // Önce kullanıcıda bu rol var mı diye kontrol edelim
+            var isInRole = await _userManager.IsInRoleAsync(user, roleName);
+            if (!isInRole)
+            {
+                result.Status = false;
+                result.Message = "Kullanıcı zaten bu yetkiye sahip değil.";
+                return result;
+            }
+
+            var removeResult = await _userManager.RemoveFromRoleAsync(user, roleName);
+            if (removeResult.Succeeded)
+            {
+                result.Status = true;
+                result.Message = $"'{roleName}' yetkisi {userName} kullanıcısından geri alındı.";
+            }
+            else
+            {
+                result.Status = false;
+                result.Message = "Yetki geri alınırken bir hata oluştu.";
+            }
+            return result;
+
+        }
+
+        // Seçilen kullanıcının sahip olduğu rolleri liste halinde döner
+        [HttpGet("{userName}")]
+        public async Task<IActionResult> GetUserRoles(string userName)
+        {
+            var user = await _userManager.FindByNameAsync(userName);
+            if (user == null) return NotFound("Kullanıcı bulunamadı.");
+
+            // Identity'nin kendi içindeki GetRolesAsync metodu o kullanıcının rollerini string listesi olarak verir
+            var roles = await _userManager.GetRolesAsync(user);
+            return Ok(roles);
+
         }
     }
 }

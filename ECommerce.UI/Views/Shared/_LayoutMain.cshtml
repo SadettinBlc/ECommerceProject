@@ -1,0 +1,143 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <title>E-Commerce - Main Page</title>
+
+    <link href="~/sbadmin/vendor/fontawesome-free/css/all.min.css" rel="stylesheet" type="text/css">
+    <link href="~/sbadmin/css/sb-admin-2.min.css" rel="stylesheet">
+    
+    <style>
+        /* Mağazaya özel koyu (Dark) ve şık tema ayarları */
+        body { background-color: #121212; color: #e0e0e0; }
+        .navbar-custom { background-color: #1a1a1a; border-bottom: 1px solid #333; }
+        .card-custom { background-color: #1e1e1e; border: 1px solid #333; transition: transform 0.2s; }
+        .card-custom:hover { transform: translateY(-5px); border-color: #555; }
+        .text-custom { color: #d4af37; } /* Şık bir gold/sarı tonu */
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom shadow-sm mb-4">
+        <div class="container">
+            <a class="navbar-brand font-weight-bold" href="/Home/MainPage">
+                <i class="fas fa-store text-custom"></i> E-COMMERCE
+            </a>
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav mr-auto"></ul>
+
+                <ul class="navbar-nav ml-auto">
+                    <li class="nav-item">
+                        <a class="nav-link text-white font-weight-bold" href="/Home/Basket">
+                            <i class="fas fa-shopping-cart"></i> Basket <span class="badge badge-danger" id="cartCount">0</span>
+                        </a>
+                    </li>
+                    <div class="topbar-divider d-none d-sm-block border-secondary mx-3"></div>
+                    
+                    <li class="nav-item NotLogined"><a class="nav-link" href="/Login"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                    <li class="nav-item NotLogined"><a class="nav-link" href="/Home/Register"><i class="fas fa-user-plus"></i> Register</a></li>
+                    
+                    <li class="nav-item AdminOnly" style="display:none;"><a class="nav-link text-warning font-weight-bold" href="/Home/Index"><i class="fas fa-cogs"></i> Admin Panel</a></li>
+
+                    <li class="nav-item dropdown Logined" style="display:none;">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <i class="fas fa-user-circle"></i> <span id="navUserName">My Account</span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right bg-dark border-secondary shadow animated--grow-in" aria-labelledby="userDropdown">
+                            <a class="dropdown-item text-light" href="/Home/Profile"><i class="fas fa-id-card fa-sm fa-fw mr-2 text-custom"></i> Profile</a>
+                            <a class="dropdown-item text-light" href="/Home/MyOrders"><i class="fas fa-box-open fa-sm fa-fw mr-2 text-custom"></i> My Orders</a>
+                            <a class="dropdown-item text-light" href="/Home/Favorites"><i class="fas fa-heart text-danger fa-sm fa-fw mr-2"></i> My Favorites</a>
+                            <a class="dropdown-item text-light" href="#"><i class="fas fa-star text-warning fa-sm fa-fw mr-2"></i> My Reviews</a>
+                            <div class="dropdown-divider border-secondary"></div>
+                            <a class="dropdown-item text-danger font-weight-bold" href="#" id="btnMainLogout"><i class="fas fa-sign-out-alt fa-sm fa-fw mr-2"></i> Logout</a>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container min-vh-100">
+        @RenderBody()
+    </div>
+
+    <footer class="py-4 navbar-custom mt-5">
+        <div class="container text-center">
+            <span class="text-muted">Copyright &copy; E-Commerce Hackathon 2026</span>
+        </div>
+    </footer>
+
+    <script src="~/sbadmin/vendor/jquery/jquery.min.js"></script>
+    <script src="~/sbadmin/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        function parseJwt(token) {
+            try { return JSON.parse(decodeURIComponent(window.atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')).split('').map(function(c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2); }).join(''))); } 
+            catch (e) { return null; }
+        }
+
+        // KÜRESEL SEPET SAYACI FONKSİYONU
+        window.UpdateCartCount = function() {
+            var token = localStorage.getItem("token");
+            
+            // Eğer ViewBag ile API URL gelmezse, direkt local portu kullan (Eğer API portun 7073 değilse burayı değiştir!)
+            var apiUrl = "@ViewBag.ApiBaseURL";
+            if (!apiUrl || apiUrl.trim() === "") {
+                apiUrl = "https://localhost:7073/api"; 
+            }
+
+            if(!token) return;
+            
+            $.ajax({
+                url: apiUrl + "/Basket/GetMyBasket",
+                type: "GET",
+                headers: { "Authorization": "Bearer " + token },
+                success: function(d) {
+                    var items = d.basketItems || d.BasketItems || [];
+                    var totalCount = 0;
+                    $.each(items, function(i, item) { totalCount += (item.quantity || item.Quantity); });
+                    $("#cartCount").text(totalCount); // Rozeti güncelle
+                },
+                error: function() { $("#cartCount").text("0"); }
+            });
+        };
+
+        $(document).ready(function () {
+            var token = localStorage.getItem("token");
+            
+            if (token) {
+                // Giriş yapılmışsa UI ayarları
+                $(".NotLogined").hide();
+                $(".Logined").show();
+                
+                var decoded = parseJwt(token);
+                if (decoded) {
+                    var uName = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
+                    if(uName) $("#navUserName").text(uName);
+
+                    // Sadece Adminse butonu göster
+                    var userRole = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+                    if (userRole) {
+                        var isAdmin = Array.isArray(userRole) ? userRole.includes("Admin") : (userRole === "Admin");
+                        if(isAdmin) { $(".AdminOnly").show(); }
+                    }
+                }
+                
+                // Sayfa ilk yüklendiğinde sepetteki ürün sayısını getir
+                window.UpdateCartCount();
+            }
+
+            $("#btnMainLogout").click(function () {
+                localStorage.removeItem("token");
+                window.location.replace("/Home/MainPage"); 
+            });
+        });
+    </script>
+    
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

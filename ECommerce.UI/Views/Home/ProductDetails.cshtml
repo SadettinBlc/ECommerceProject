@@ -1,0 +1,388 @@
+﻿ProductDetails:
+
+
+
+@{
+
+    ViewData["Title"] = "Product Details";
+
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+
+}
+
+
+
+<div class="row mt-4">
+
+    <div class="col-md-5 mb-4">
+
+        <div class="card card-custom shadow p-3">
+
+            <img id="imgProduct" src="" class="img-fluid rounded" alt="Product Image" style="object-fit: cover; width: 100%; max-height: 500px;">
+
+        </div>
+
+    </div>
+
+
+
+    <div class="col-md-7">
+
+        <h2 id="lblProductName" class="font-weight-bold text-light border-bottom border-secondary pb-3">Loading...</h2>
+
+        
+
+        <div class="mb-3">
+
+            <span class="text-warning" id="lblStarRating" style="font-size: 1.2rem;">⭐⭐⭐⭐⭐</span>
+
+            <span class="text-muted ml-2" id="lblTotalReviews">(0 Reviews)</span>
+
+        </div>
+
+
+
+        <h3 id="lblProductPrice" class="text-custom font-weight-bold my-3">₺0.00</h3>
+
+        
+
+        <p id="lblProductDesc" class="text-muted mt-3" style="font-size: 1.1rem; line-height: 1.6;">
+
+        </p>
+
+
+
+        <div id="featuresContainer" class="mt-4" style="display:none;">
+
+            <h5 class="text-light font-weight-bold"><i class="fas fa-list"></i> Specifications</h5>
+
+            <ul class="list-group list-group-flush mt-3 border border-secondary rounded" id="listFeatures">
+            </ul>
+
+        </div>
+
+
+
+        <div class="row mt-5">
+
+            <div class="col-md-6 mb-2">
+
+                <button class="btn btn-primary btn-lg btn-block font-weight-bold shadow" id="btnAddToCart">
+
+                    <i class="fas fa-cart-plus"></i> Add to Basket
+
+                </button>
+
+            </div>
+
+            <div class="col-md-6 mb-2">
+
+                <button class="btn btn-outline-danger btn-lg btn-block font-weight-bold shadow" id="btnAddFavorite">
+
+                    <i class="far fa-heart"></i> Add to Favorites
+
+                </button>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<div class="row mt-5 pt-4 border-top border-secondary">
+
+    <div class="col-12">
+
+        <h3 class="text-light font-weight-bold mb-4"><i class="fas fa-comments text-custom"></i> Customer Reviews</h3>
+
+    </div>
+
+
+
+    <div class="col-md-5 mb-4 Logined" style="display:none;">
+
+        <div class="card card-custom p-4">
+
+            <h5 class="text-light mb-3">Write a Review</h5>
+
+            <div class="form-group">
+
+                <select class="form-control bg-dark text-light border-secondary" id="cbRating">
+
+                    <option value="5">⭐⭐⭐⭐⭐ (5/5) Perfect</option>
+
+                    <option value="4">⭐⭐⭐⭐ (4/5) Good</option>
+
+                    <option value="3">⭐⭐⭐ (3/5) Average</option>
+
+                    <option value="2">⭐⭐ (2/5) Bad</option>
+
+                    <option value="1">⭐ (1/5) Terrible</option>
+
+                </select>
+
+            </div>
+
+            <div class="form-group">
+
+                <textarea class="form-control bg-dark text-light border-secondary" id="txtReviewMessage" rows="3" placeholder="Share your thoughts..."></textarea>
+
+            </div>
+
+            <button class="btn btn-outline-warning btn-block font-weight-bold" id="btnSubmitReview">Submit Review</button>
+
+        </div>
+
+    </div>
+
+
+
+    <div class="col-md-5 mb-4 NotLogined">
+
+        <div class="alert alert-secondary bg-dark text-light border-secondary">
+
+            You must <a href="/Home/Login" class="text-custom font-weight-bold">Login</a> to write a review.
+
+        </div>
+
+    </div>
+
+
+
+    <div class="col-md-7">
+
+        <div id="reviewsList">
+
+            <div class="text-center mt-3"><div class="spinner-border text-custom" role="status"></div></div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var apiBaseUrl = "@ViewBag.ApiBaseURL";
+            var token = localStorage.getItem("token");
+            var productId = @ViewBag.ProductId;
+
+            function showNotification(message, isSuccess) {
+                var bgColor = isSuccess ? "bg-success" : "bg-danger";
+                var toastHtml = `<div class="toast-notification ${bgColor} text-white px-4 py-3 rounded shadow-lg" style="position: fixed; bottom: 30px; right: 30px; z-index: 9999; display: none; font-weight: bold;">
+                                    <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}
+                                 </div>`;
+                var $toast = $(toastHtml).appendTo("body");
+                $toast.fadeIn(400).delay(2500).fadeOut(400, function() { $(this).remove(); });
+            }
+
+            $.ajax({
+                url: apiBaseUrl + "/Product/GetById/" + productId,
+                type: "GET",
+                success: function (p) {
+                    var imgPath = (p.photoUrl || p.PhotoUrl) ?
+                                  (apiBaseUrl.replace('/api', '') + "/" + (p.photoUrl || p.PhotoUrl).replace(/\\/g, '/')) :
+                                  "https://dummyimage.com/600x600/1e1e1e/d4af37&text=No+Image";
+                    
+                    $("#imgProduct").attr("src", imgPath);
+                    $("#lblProductName").text(p.name || p.Name);
+                    $("#lblProductPrice").text("₺" + (p.price || p.Price));
+                    $("#lblProductDesc").text(p.description || p.Description || "No description available.");
+
+                    var features = p.productFeatures || p.ProductFeatures;
+                    if (features && features.length > 0) {
+                        $("#featuresContainer").show();
+                        $.each(features, function(i, f) {
+                            $("#listFeatures").append(`
+                                <li class="list-group-item bg-dark text-light border-secondary px-3 py-2">
+                                    <strong class="text-custom">${f.name || f.Name}:</strong> ${f.value || f.Value}
+                                </li>
+                            `);
+                        });
+                    }
+                }
+            });
+
+            function LoadReviews() {
+                $.ajax({
+                    url: apiBaseUrl + "/Review/GetProductReviews/" + productId,
+                    type: "GET",
+                    success: function (d) {
+                        $("#reviewsList").empty();
+                        
+                        var avg = d.averageRating || d.AverageRating || 0;
+                        var total = d.totalReviews || d.TotalReviews || 0;
+                        
+                        $("#lblTotalReviews").text("(" + total + " Reviews)");
+                        
+                        var starString = "⭐".repeat(Math.round(avg)) + '<span style="font-size:0.9rem; color:#bbb;"> ('+avg+'/5)</span>';
+                        if(total === 0) starString = "Not Rated Yet";
+                        $("#lblStarRating").html(starString);
+
+                        var revList = d.reviews || d.Reviews || [];
+                        if (revList.length === 0) {
+                            $("#reviewsList").html('<div class="alert alert-secondary bg-dark text-light border-secondary">No reviews yet. Be the first to review!</div>');
+                            return;
+                        }
+
+                        $.each(revList, function (i, r) {
+                            var stars = "⭐".repeat(r.rating || r.Rating || 5);
+                            var userName = r.userName || r.UserName;
+                            var msg = r.comment || r.Comment;
+                            
+                            var reviewHtml = `
+                                <div class="card card-custom mb-3">
+                                    <div class="card-body py-3">
+                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                            <strong class="text-custom"><i class="fas fa-user-circle"></i> ${userName}</strong>
+                                            <span>${stars}</span>
+                                        </div>
+                                        <p class="mb-0 text-light">${msg}</p>
+                                    </div>
+                                </div>
+                            `;
+                            $("#reviewsList").append(reviewHtml);
+                        });
+                    }
+                });
+            }
+            LoadReviews();
+
+            $("#btnSubmitReview").click(function () {
+                var message = $("#txtReviewMessage").val();
+                var rating = parseInt($("#cbRating").val());
+
+                if(!message) {
+                    showNotification("Please enter a message!", false);
+                    return;
+                }
+
+                var requestUrl = apiBaseUrl + "/Review/Add?productId=" + productId + "&comment=" + encodeURIComponent(message) + "&rating=" + rating;
+
+                $.ajax({
+                    url: requestUrl,
+                    type: "POST",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (d) {
+                        if(d.status) {
+                            $("#txtReviewMessage").val("");
+                            showNotification(d.message, true);
+                            LoadReviews();
+                        } else {
+                            showNotification(d.message, false);
+                        }
+                    }
+                });
+            });
+
+            // YENİ: TEMİZLENMİŞ SEPETE EKLEME İŞLEMİ (SAYAÇ GÜNCELLEMESİYLE)
+            $("#btnAddToCart").click(function() {
+                if(!token) { showNotification("You must be logged in to add items to your basket.", false); return; }
+                
+                var btn = $(this);
+                btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i> Adding...');
+
+                var requestUrl = apiBaseUrl + "/Basket/AddItem?productId=" + productId + "&quantity=1";
+
+                $.ajax({
+                    url: requestUrl,
+                    type: "POST",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function(d) {
+                        if(d.status) {
+                            showNotification("Item added to basket!", true);
+                            if(typeof window.UpdateCartCount === "function") window.UpdateCartCount();
+                            
+                            btn.removeClass("btn-primary").addClass("btn-success").html('<i class="fas fa-check"></i> Added');
+                            setTimeout(function() {
+                                btn.removeClass("btn-success").addClass("btn-primary").html('<i class="fas fa-cart-plus"></i> Add to Basket');
+                                btn.prop("disabled", false);
+                            }, 2000);
+                        } else {
+                            showNotification(d.message, false);
+                            btn.prop("disabled", false).html('<i class="fas fa-cart-plus"></i> Add to Basket');
+                        }
+                    },
+                    error: function() {
+                        showNotification("Connection Error!", false);
+                        btn.prop("disabled", false).html('<i class="fas fa-cart-plus"></i> Add to Basket');
+                    }
+                });
+            });
+
+            var isProductFavorite = false;
+
+            if(token) {
+                $.ajax({
+                    url: apiBaseUrl + "/Favorite/GetMyFavorites",
+                    type: "GET",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (d) {
+                        if (d && d.length > 0) {
+                            var favIds = d.map(p => p.id || p.Id);
+                            if (favIds.includes(productId)) {
+                                isProductFavorite = true;
+                                $("#btnAddFavorite").removeClass("btn-outline-danger").addClass("btn-danger")
+                                                    .html('<i class="fas fa-heart"></i> Remove from Favorites');
+                            }
+                        }
+                    }
+                });
+            }
+
+            $("#btnAddFavorite").click(function() {
+                if(!token) {
+                    showNotification("You must be logged in!", false);
+                    return;
+                }
+                
+                var btn = $(this);
+                btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+
+                if (isProductFavorite) {
+                    $.ajax({
+                        url: apiBaseUrl + "/Favorite/Remove/" + productId,
+                        type: "DELETE",
+                        headers: { "Authorization": "Bearer " + token },
+                        success: function(d) {
+                            if(d.status) {
+                                isProductFavorite = false;
+                                btn.removeClass("btn-danger").addClass("btn-outline-danger").html('<i class="far fa-heart"></i> Add to Favorites');
+                                showNotification("Removed from favorites.", true);
+                            } else {
+                                btn.html('<i class="fas fa-heart"></i> Remove from Favorites');
+                                showNotification(d.message, false);
+                            }
+                            btn.prop("disabled", false);
+                        }
+                    });
+                } else {
+                    $.ajax({
+                        url: apiBaseUrl + "/Favorite/Add?productId=" + productId,
+                        type: "POST",
+                        headers: { "Authorization": "Bearer " + token },
+                        success: function(d) {
+                            if(d.status) {
+                                isProductFavorite = true;
+                                btn.removeClass("btn-outline-danger").addClass("btn-danger").html('<i class="fas fa-heart"></i> Remove from Favorites');
+                                showNotification("Added to favorites!", true);
+                            } else {
+                                btn.html('<i class="far fa-heart"></i> Add to Favorites');
+                                showNotification(d.message, false);
+                            }
+                            btn.prop("disabled", false);
+                        }
+                    });
+                }
+            });
+
+        });
+    </script>
+}

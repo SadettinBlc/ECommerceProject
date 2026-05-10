@@ -1,0 +1,376 @@
+﻿MainPage:
+
+
+
+@{
+
+    ViewData["Title"] = "Main Page";
+
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+
+}
+
+
+
+<div class="row mb-3">
+
+    <div class="col-12">
+
+        <h2 class="font-weight-bold border-bottom border-secondary pb-2">Discover Products</h2>
+
+    </div>
+
+</div>
+
+
+
+<div class="card card-custom shadow-sm mb-4 p-3">
+
+    <div class="row">
+
+        <div class="col-md-4 mb-2 mb-md-0">
+
+            <div class="input-group">
+
+                <input type="text" id="txtSearch" class="form-control bg-dark text-light border-secondary" placeholder="Search products...">
+
+                <div class="input-group-append">
+
+                    <button class="btn btn-outline-warning" type="button" id="btnSearch"><i class="fas fa-search"></i></button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4 mb-2 mb-md-0">
+
+            <select id="cbCategories" class="form-control bg-dark text-light border-secondary">
+
+                <option value="">All Categories</option>
+
+            </select>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <select id="cbSortBy" class="form-control bg-dark text-light border-secondary">
+
+                <option value="">Sort By: Newest First</option>
+
+                <option value="price_asc">Price: Low to High</option>
+
+                <option value="price_desc">Price: High to Low</option>
+
+                <option value="name_asc">Name: A to Z</option>
+
+                <option value="name_desc">Name: Z to A</option>
+
+            </select>
+
+        </div>
+
+    </div>
+
+    
+
+    <div class="row mt-3" id="featureFilters" style="display:none;">
+
+        <div class="col-12">
+
+            <div class="p-3 border border-secondary rounded bg-dark" id="featureCheckboxes">
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<div class="row" id="productContainer">
+
+    <div class="col-12 text-center mt-5">
+
+        <div class="spinner-border text-custom" role="status"></div>
+
+        <h5 class="mt-3">Products are loading...</h5>
+
+    </div>
+
+</div>
+
+
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var apiBaseUrl = "@ViewBag.ApiBaseURL";
+            var token = localStorage.getItem("token");
+            var myFavoriteIds = [];
+
+            function showNotification(message, isSuccess) {
+                var bgColor = isSuccess ? "bg-success" : "bg-danger";
+                var toastHtml = `<div class="toast-notification ${bgColor} text-white px-4 py-3 rounded shadow-lg" style="position: fixed; bottom: 30px; right: 30px; z-index: 9999; display: none; font-weight: bold;">
+                                    <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}
+                                 </div>`;
+                var $toast = $(toastHtml).appendTo("body");
+                $toast.fadeIn(400).delay(2500).fadeOut(400, function() { $(this).remove(); });
+            }
+
+            function LoadFavoritesAndProducts() {
+                if(!token) {
+                    LoadCategories();
+                    LoadProducts();
+                    return;
+                }
+                
+                $.ajax({
+                    url: apiBaseUrl + "/Favorite/GetMyFavorites",
+                    type: "GET",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (d) {
+                        myFavoriteIds = [];
+                        if (d && d.length > 0) {
+                            $.each(d, function(i, p) { myFavoriteIds.push(p.id || p.Id); });
+                        }
+                        LoadCategories();
+                        LoadProducts();
+                    },
+                    error: function() {
+                        myFavoriteIds = [];
+                        LoadCategories();
+                        LoadProducts();
+                    }
+                });
+            }
+
+            function LoadCategories() {
+                if ($("#cbCategories option").length > 1) return;
+                $.ajax({
+                    url: apiBaseUrl + "/Category/List",
+                    type: "GET",
+                    success: function (d) {
+                        $.each(d, function (i, c) {
+                            if(c.isActive || c.IsActive) {
+                                $("#cbCategories").append('<option value="' + (c.id || c.Id) + '">' + (c.name || c.Name) + '</option>');
+                            }
+                        });
+                    }
+                });
+            }
+
+            function LoadProducts() {
+                $("#productContainer").html('<div class="col-12 text-center mt-5"><div class="spinner-border text-custom" role="status"></div><h5 class="mt-3">Loading...</h5></div>');
+
+                var searchVal = $("#txtSearch").val();
+                var catId = $("#cbCategories").val();
+                var sortVal = $("#cbSortBy").val();
+                var checkedFeatures = $(".feature-chk:checked").map(function(){ return $(this).val(); }).get().join(',');
+
+                var requestUrl = apiBaseUrl + "/Product/List?page=1&pageSize=20";
+                if(searchVal) requestUrl += "&search=" + encodeURIComponent(searchVal);
+                if(catId) requestUrl += "&categoryId=" + catId;
+                if(sortVal) requestUrl += "&sortBy=" + sortVal;
+                if(checkedFeatures) requestUrl += "&features=" + encodeURIComponent(checkedFeatures);
+
+                $.ajax({
+                    url: requestUrl,
+                    type: "GET",
+                    success: function (d) {
+                        $("#productContainer").empty();
+                        var products = d.items || d.Items || [];
+
+                        if (products.length === 0) {
+                            $("#productContainer").html('<div class="col-12 alert alert-warning bg-dark text-warning border-warning">No products found matching your criteria.</div>');
+                            return;
+                        }
+
+                        $.each(products, function (i, p) {
+                            var imgPath = (p.photoUrl || p.PhotoUrl) ?
+                                          (apiBaseUrl.replace('/api', '') + "/" + (p.photoUrl || p.PhotoUrl).replace(/\\/g, '/')) :
+                                          "https://dummyimage.com/400x300/1e1e1e/d4af37&text=No+Image";
+                            var pName = p.name || p.Name;
+                            var pPrice = p.price || p.Price;
+                            var pId = p.id || p.Id;
+
+                            var isFav = myFavoriteIds.includes(pId);
+                            var btnFavClass = isFav ? "btn-danger is-fav" : "btn-outline-danger";
+                            var iconFavClass = isFav ? "fas fa-heart" : "far fa-heart";
+
+                            var cardHtml = `
+                                <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
+                                    <div class="card card-custom h-100 shadow">
+                                        <div class="position-relative">
+                                            <img src="${imgPath}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="${pName}">
+                                            <button class="btn btn-sm ${btnFavClass} position-absolute btnAddFav shadow" data-id="${pId}" style="top: 10px; right: 10px; border-radius: 50%; width: 35px; height: 35px; padding: 0;">
+                                                <i class="${iconFavClass}"></i>
+                                            </button>
+                                        </div>
+                                        <div class="card-body d-flex flex-column">
+                                            <h5 class="card-title font-weight-bold mb-1">${pName}</h5>
+                                            <div class="mb-2 rating-container-${pId}" style="font-size: 0.85rem;">
+                                                <span class="spinner-border spinner-border-sm text-custom" role="status"></span>
+                                            </div>
+                                            <h4 class="text-custom mt-auto mb-3">₺${pPrice}</h4>
+                                            <div class="row">
+                                                <div class="col-6 pr-1">
+                                                    <a href="/Home/ProductDetails/${pId}" class="btn btn-outline-light btn-sm btn-block"><i class="fas fa-search"></i> Details</a>
+                                                </div>
+                                                <div class="col-6 pl-1">
+                                                    <button class="btn btn-primary btn-sm btn-block btnAddToCartList" data-id="${pId}"><i class="fas fa-cart-plus"></i> Add</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            $("#productContainer").append(cardHtml);
+
+                            $.ajax({
+                                url: apiBaseUrl + "/Review/GetProductReviews/" + pId,
+                                type: "GET",
+                                success: function(rData) {
+                                    var avg = rData.averageRating || rData.AverageRating || 0;
+                                    var count = rData.totalReviews || rData.TotalReviews || 0;
+                                    if(count === 0) {
+                                        $(".rating-container-" + pId).html('<span class="text-muted">Not rated yet</span>');
+                                    } else {
+                                        var stars = "⭐".repeat(Math.round(avg));
+                                        $(".rating-container-" + pId).html('<span class="text-warning">' + stars + '</span> <span class="text-muted">(' + avg + ')</span>');
+                                    }
+                                }
+                            });
+                        });
+                    }
+                });
+            }
+
+            LoadFavoritesAndProducts();
+
+            $("#cbCategories").change(function () {
+                var catId = $(this).val();
+                if(!catId) {
+                    $("#featureFilters").slideUp();
+                    $("#featureCheckboxes").empty();
+                    LoadProducts();
+                    return;
+                }
+                $.ajax({
+                    url: apiBaseUrl + "/Product/GetCategoryFeatures/" + catId,
+                    type: "GET",
+                    success: function(data) {
+                        $("#featureCheckboxes").empty();
+                        if(data && data.length > 0) {
+                            var html = '<h6 class="text-custom font-weight-bold mb-3 border-bottom border-secondary pb-2"><i class="fas fa-filter"></i> Filter by Specifications</h6><div class="row">';
+                            $.each(data, function(i, group) {
+                                html += '<div class="col-md-3 col-sm-6 mb-3"><strong class="text-light d-block mb-2">' + group.name + '</strong>';
+                                $.each(group.values, function(j, val) {
+                                    html += `<div class="custom-control custom-checkbox mb-1">
+                                                <input type="checkbox" class="custom-control-input feature-chk" id="chk_${i}_${j}" value="${val}">
+                                                <label class="custom-control-label text-muted" style="cursor:pointer;" for="chk_${i}_${j}">${val}</label>
+                                             </div>`;
+                                });
+                                html += '</div>';
+                            });
+                            html += '</div>';
+                            $("#featureCheckboxes").html(html);
+                            $("#featureFilters").slideDown();
+                        } else {
+                            $("#featureFilters").slideUp();
+                        }
+                        LoadProducts();
+                    }
+                });
+            });
+
+            $(document).on("change", ".feature-chk", function() { LoadProducts(); });
+            $("#btnSearch").click(function () { LoadProducts(); });
+            $("#txtSearch").keypress(function (e) { if (e.which == 13) { LoadProducts(); return false; } });
+            $("#cbSortBy").change(function () { LoadProducts(); });
+
+            $(document).on("click", ".btnAddFav", function() {
+                if(!token) { showNotification("You must be logged in to manage favorites.", false); return; }
+                
+                var btn = $(this);
+                var pId = btn.data("id");
+                var isFavorite = btn.hasClass("is-fav");
+                
+                btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+                if (isFavorite) {
+                    $.ajax({
+                        url: apiBaseUrl + "/Favorite/Remove/" + pId,
+                        type: "DELETE",
+                        headers: { "Authorization": "Bearer " + token },
+                        success: function(d) {
+                            if(d.status) {
+                                btn.removeClass("btn-danger is-fav").addClass("btn-outline-danger").html('<i class="far fa-heart"></i>');
+                                myFavoriteIds = myFavoriteIds.filter(id => id !== pId);
+                                showNotification("Removed from favorites.", true);
+                            } else {
+                                showNotification(d.message, false);
+                                btn.html('<i class="fas fa-heart"></i>');
+                            }
+                            btn.prop("disabled", false);
+                        }
+                    });
+                } else {
+                    $.ajax({
+                        url: apiBaseUrl + "/Favorite/Add?productId=" + pId,
+                        type: "POST",
+                        headers: { "Authorization": "Bearer " + token },
+                        success: function(d) {
+                            if(d.status) {
+                                btn.removeClass("btn-outline-danger").addClass("btn-danger is-fav").html('<i class="fas fa-heart"></i>');
+                                myFavoriteIds.push(pId);
+                                showNotification("Added to favorites!", true);
+                            } else {
+                                showNotification(d.message, false);
+                                btn.html('<i class="far fa-heart"></i>');
+                            }
+                            btn.prop("disabled", false);
+                        }
+                    });
+                }
+            });
+
+            // YENİ: TEMİZLENMİŞ SEPETE EKLEME İŞLEMİ
+            $(document).on("click", ".btnAddToCartList", function() {
+                if(!token) { showNotification("You must be logged in to add to basket.", false); return; }
+                
+                var btn = $(this);
+                var pId = btn.data("id");
+                btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+                $.ajax({
+                    url: apiBaseUrl + "/Basket/AddItem?productId=" + pId + "&quantity=1",
+                    type: "POST",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function(d) {
+                        if(d.status) {
+                            showNotification("Item added to basket!", true);
+                            if(typeof window.UpdateCartCount === "function") window.UpdateCartCount();
+                            
+                            btn.removeClass("btn-primary").addClass("btn-success").html('<i class="fas fa-check"></i> Added');
+                            setTimeout(function() {
+                                btn.removeClass("btn-success").addClass("btn-primary").html('<i class="fas fa-cart-plus"></i> Add');
+                                btn.prop("disabled", false);
+                            }, 2000);
+                        } else {
+                            showNotification(d.message, false);
+                            btn.prop("disabled", false).html('<i class="fas fa-cart-plus"></i> Add');
+                        }
+                    },
+                    error: function() {
+                        showNotification("Connection error!", false);
+                        btn.prop("disabled", false).html('<i class="fas fa-cart-plus"></i> Add');
+                    }
+                });
+            });
+        });
+    </script>
+}

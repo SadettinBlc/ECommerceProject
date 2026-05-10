@@ -1,0 +1,213 @@
+﻿@{
+    ViewData["Title"] = "My Favorites";
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12 d-flex justify-content-between align-items-center border-bottom border-secondary pb-2">
+        <h2 class="font-weight-bold text-light m-0"><i class="fas fa-heart text-danger"></i> My Favorites</h2>
+        <span class="badge badge-danger p-2" id="favCount" style="font-size: 1rem;">0 Items</span>
+    </div>
+</div>
+
+<div class="row" id="favoritesContainer">
+    <div class="col-12 text-center mt-5" id="loadingDiv">
+        <div class="spinner-border text-custom" role="status"></div>
+        <h5 class="mt-3 text-light">Loading your favorites...</h5>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var apiBaseUrl = "@ViewBag.ApiBaseURL";
+            var token = localStorage.getItem("token");
+
+            // --- ŞIK BİLDİRİM FONKSİYONU ---
+            function showNotification(message, isSuccess) {
+                var bgColor = isSuccess ? "bg-success" : "bg-danger";
+                var toastHtml = `<div class="toast-notification ${bgColor} text-white px-4 py-3 rounded shadow-lg" style="position: fixed; bottom: 30px; right: 30px; z-index: 9999; display: none; font-weight: bold;">
+                                    <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}
+                                 </div>`;
+                var $toast = $(toastHtml).appendTo("body");
+                $toast.fadeIn(400).delay(2500).fadeOut(400, function() { $(this).remove(); });
+            }
+
+            // Sayfaya direkt linkten girilirse ve giriş yapılmamışsa kapı dışarı et
+            if (!token) {
+                window.location.replace("/Login");
+                return;
+            }
+
+            // 1. FAVORİLERİ GETİR
+            function LoadFavorites() {
+                $.ajax({
+                    url: apiBaseUrl + "/Favorite/GetMyFavorites",
+                    type: "GET",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (d) {
+                        $("#favoritesContainer").empty();
+                        
+                        var products = d || [];
+
+                        if (products.length === 0) {
+                            ShowEmptyState();
+                            return;
+                        }
+
+                        $("#favCount").text(products.length + " Items");
+
+                        $.each(products, function (i, p) {
+                            var imgPath = (p.photoUrl || p.PhotoUrl) ?
+                                          (apiBaseUrl.replace('/api', '') + "/" + (p.photoUrl || p.PhotoUrl).replace(/\\/g, '/')) :
+                                          "https://dummyimage.com/400x300/1e1e1e/d4af37&text=No+Image";
+                            var pName = p.name || p.Name;
+                            var pPrice = p.price || p.Price;
+                            var pId = p.id || p.Id;
+
+                            // Kart HTML'i (Sağ üstte çöp kutusu/çarpı ikonu ile)
+                            var cardHtml = `
+                                <div class="col-xl-3 col-lg-4 col-md-6 mb-4 fav-card" id="fav-card-${pId}">
+                                    <div class="card card-custom h-100 shadow">
+                                        <div class="position-relative">
+                                            <img src="${imgPath}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="${pName}">
+                                            <button class="btn btn-sm btn-dark position-absolute btnRemoveFav shadow border-secondary" data-id="${pId}" style="top: 10px; right: 10px; border-radius: 50%; width: 35px; height: 35px; padding: 0;" title="Remove from Favorites">
+                                                <i class="fas fa-times text-danger"></i>
+                                            </button>
+                                        </div>
+                                        <div class="card-body d-flex flex-column">
+                                            <h5 class="card-title font-weight-bold mb-1">${pName}</h5>
+                                            
+                                            <div class="mb-2 rating-container-${pId}" style="font-size: 0.85rem;">
+                                                <span class="spinner-border spinner-border-sm text-custom" role="status"></span>
+                                            </div>
+
+                                            <h4 class="text-custom mt-auto mb-3">₺${pPrice}</h4>
+                                            <div class="row">
+                                                <div class="col-6 pr-1">
+                                                    <a href="/Home/ProductDetails/${pId}" class="btn btn-outline-light btn-sm btn-block"><i class="fas fa-search"></i> Details</a>
+                                                </div>
+                                                <div class="col-6 pl-1">
+                                                    <button class="btn btn-primary btn-sm btn-block btnAddToCartList" data-id="${pId}"><i class="fas fa-cart-plus"></i> Add</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            $("#favoritesContainer").append(cardHtml);
+
+                            // Yıldızları Çek
+                            $.ajax({
+                                url: apiBaseUrl + "/Review/GetProductReviews/" + pId,
+                                type: "GET",
+                                success: function(rData) {
+                                    var avg = rData.averageRating || rData.AverageRating || 0;
+                                    var count = rData.totalReviews || rData.TotalReviews || 0;
+                                    if(count === 0) {
+                                        $(".rating-container-" + pId).html('<span class="text-muted">Not rated yet</span>');
+                                    } else {
+                                        var stars = "⭐".repeat(Math.round(avg));
+                                        $(".rating-container-" + pId).html('<span class="text-warning">' + stars + '</span> <span class="text-muted">(' + avg + ')</span>');
+                                    }
+                                }
+                            });
+                        });
+                    },
+                    error: function(xhr) {
+                        // Eğer API 404 dönüyorsa (Hiç favori yoksa)
+                        if (xhr.status === 404) {
+                            ShowEmptyState();
+                        } else {
+                            $("#favoritesContainer").html('<div class="col-12 alert alert-danger bg-danger text-light border-0">Failed to load favorites. Connection error.</div>');
+                        }
+                    }
+                });
+            }
+
+            function ShowEmptyState() {
+                $("#favCount").text("0 Items");
+                $("#favoritesContainer").html(`
+                    <div class="col-12 text-center mt-5">
+                        <i class="far fa-heart text-secondary" style="font-size: 5rem; margin-bottom: 20px;"></i>
+                        <h4 class="text-light mb-3">Your Favorites list is empty.</h4>
+                        <p class="text-muted mb-4">Seems like you haven't added any products to your favorites yet.</p>
+                        <a href="/Home/MainPage" class="btn btn-warning font-weight-bold px-4 py-2"><i class="fas fa-store"></i> Discover Products</a>
+                    </div>
+                `);
+            }
+
+            // Sistemi Başlat
+            LoadFavorites();
+
+            // 2. FAVORİLERDEN ÇIKAR (KARTIN SAĞ ÜSTÜNDEKİ X BUTONU)
+            $(document).on("click", ".btnRemoveFav", function() {
+                var btn = $(this);
+                var pId = btn.data("id");
+                
+                btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+                $.ajax({
+                    url: apiBaseUrl + "/Favorite/Remove/" + pId,
+                    type: "DELETE",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function(d) {
+                        if(d.status) {
+                            showNotification("Removed from favorites.", true);
+                            
+                            // Sayfayı yenilemeden kartı jilet gibi bir efektle (fadeOut) kaybet
+                            $("#fav-card-" + pId).fadeOut(400, function() {
+                                $(this).remove();
+                                
+                                // Kalan kart sayısını say, 0 ise boş ekranı göster
+                                var remaining = $(".fav-card").length;
+                                $("#favCount").text(remaining + " Items");
+                                if(remaining === 0) { ShowEmptyState(); }
+                            });
+                        } else {
+                            showNotification(d.message, false);
+                            btn.html('<i class="fas fa-times text-danger"></i>');
+                            btn.prop("disabled", false);
+                        }
+                    }
+                });
+            });
+
+            // 3. SEPETE EKLEME İŞLEMİ (MİKTAR ARTIŞIYLA)
+            $(document).on("click", ".btnAddToCartList", function() {
+                var btn = $(this);
+                var pId = btn.data("id");
+                
+                btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+                $.ajax({
+                    url: apiBaseUrl + "/Basket/AddItem?productId=" + pId + "&quantity=1",
+                    type: "POST",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function(d) {
+                        if(d.status) {
+                            showNotification("Item added to basket!", true);
+                            
+                            // Sayacı anında güncelle
+                            if(typeof window.UpdateCartCount === "function") window.UpdateCartCount();
+                            
+                            // Animasyon
+                            btn.removeClass("btn-primary").addClass("btn-success").html('<i class="fas fa-check"></i> Added');
+                            setTimeout(function() {
+                                btn.removeClass("btn-success").addClass("btn-primary").html('<i class="fas fa-cart-plus"></i> Add');
+                                btn.prop("disabled", false);
+                            }, 2000);
+                        } else {
+                            showNotification(d.message, false);
+                            btn.prop("disabled", false).html('<i class="fas fa-cart-plus"></i> Add');
+                        }
+                    },
+                    error: function() {
+                        showNotification("Connection error!", false);
+                        btn.prop("disabled", false).html('<i class="fas fa-cart-plus"></i> Add');
+                    }
+                });
+            });
+        });
+    </script>
+}

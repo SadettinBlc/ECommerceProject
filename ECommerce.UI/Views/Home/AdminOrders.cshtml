@@ -1,0 +1,180 @@
+﻿@{
+    ViewData["Title"] = "Order Management";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Sipariş Yönetimi</h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Müşteri Siparişleri</h6>
+        </div>
+        <div class="card-body">
+            
+            <ul class="nav nav-tabs mb-4" id="orderTabs" role="tablist">
+                <li class="nav-item">
+                    <a class="nav-link active font-weight-bold text-primary" id="active-tab" data-toggle="tab" href="#activeOrders" role="tab">
+                        <i class="fas fa-spinner fa-spin mr-1"></i> Aktif Siparişler
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link font-weight-bold text-secondary" id="history-tab" data-toggle="tab" href="#historyOrders" role="tab">
+                        <i class="fas fa-check-double mr-1"></i> Geçmiş Siparişler
+                    </a>
+                </li>
+            </ul>
+
+            <div class="tab-content" id="orderTabsContent">
+                
+                <div class="tab-pane fade show active" id="activeOrders" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Müşteri</th>
+                                    <th>Tarih</th>
+                                    <th>Tutar</th>
+                                    <th>Durum</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="activeOrderList">
+                                <tr><td colspan="6" class="text-center"><i class="fas fa-spinner fa-spin"></i> Yükleniyor...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="tab-pane fade" id="historyOrders" role="tabpanel">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped" width="100%" cellspacing="0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Müşteri</th>
+                                    <th>Tarih</th>
+                                    <th>Tutar</th>
+                                    <th>Durum</th>
+                                    <th>İşlem</th>
+                                </tr>
+                            </thead>
+                            <tbody id="historyOrderList">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var apiBaseUrl = "@ViewBag.ApiBaseURL";
+            var token = localStorage.getItem("token");
+
+            function LoadAllOrders() {
+                $.ajax({
+                    url: apiBaseUrl + "/Order/GetAllOrders",
+                    type: "GET",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (orders) {
+                        $("#activeOrderList").empty();
+                        $("#historyOrderList").empty();
+                        
+                        var activeCount = 0;
+                        var historyCount = 0;
+
+                        $.each(orders, function (i, o) {
+                            var date = new Date(o.created).toLocaleString();
+                            var isHistory = (o.orderStatus === "Teslim Edildi" || o.orderStatus === "İptal Edildi");
+                            
+                            var statusHtml = `
+                                <select class="form-control form-control-sm cbStatusChange" data-id="${o.id}">
+                                    <option value="Hazırlanıyor" ${o.orderStatus == 'Hazırlanıyor' ? 'selected' : ''}>Hazırlanıyor</option>
+                                    <option value="Kargoya Verildi" ${o.orderStatus == 'Kargoya Verildi' ? 'selected' : ''}>Kargoya Verildi</option>
+                                    <option value="Teslim Edildi" ${o.orderStatus == 'Teslim Edildi' ? 'selected' : ''}>Teslim Edildi</option>
+                                    <option value="İptal Edildi" ${o.orderStatus == 'İptal Edildi' ? 'selected' : ''}>İptal Edildi</option>
+                                </select>
+                            `;
+
+                            var row = `
+                                <tr id="order-row-${o.id}">
+                                    <td class="font-weight-bold">#${o.id}</td>
+                                    <td>${o.appUser?.fullName || 'User'}</td>
+                                    <td>${date}</td>
+                                    <td class="font-weight-bold text-success">₺${o.totalPrice}</td>
+                                    <td>${statusHtml}</td>
+                                    <td>
+                                        <button class="btn btn-primary btn-sm btnSaveStatus" data-id="${o.id}" title="Durumu Güncelle"><i class="fas fa-save"></i></button>
+                                        <button class="btn btn-danger btn-sm btnDeleteOrder" data-id="${o.id}" title="Siparişi Sil"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            `;
+
+                            if (isHistory) {
+                                $("#historyOrderList").append(row);
+                                historyCount++;
+                            } else {
+                                $("#activeOrderList").append(row);
+                                activeCount++;
+                            }
+                        });
+
+                        if(activeCount === 0) $("#activeOrderList").html('<tr><td colspan="6" class="text-center text-muted">Aktif sipariş bulunmuyor.</td></tr>');
+                        if(historyCount === 0) $("#historyOrderList").html('<tr><td colspan="6" class="text-center text-muted">Geçmiş sipariş bulunmuyor.</td></tr>');
+                    }
+                });
+            }
+
+            LoadAllOrders();
+
+            // DURUM GÜNCELLEME (Teslim Edildi seçilirse tablo değiştirir)
+            $(document).on("click", ".btnSaveStatus", function() {
+                var btn = $(this);
+                var orderId = btn.data("id");
+                var newStatus = btn.closest("tr").find(".cbStatusChange").val();
+                
+                btn.html('<i class="fas fa-spinner fa-spin"></i>').prop("disabled", true);
+
+                $.ajax({
+                    url: apiBaseUrl + "/Order/UpdateOrderStatus?orderId=" + orderId + "&newStatus=" + encodeURIComponent(newStatus),
+                    type: "POST",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function(d) {
+                        alert(d.message);
+                        LoadAllOrders(); // Tabloları tazelemek için baştan çek
+                    },
+                    error: function() {
+                        alert("Güncelleme başarısız!");
+                        btn.html('<i class="fas fa-save"></i>').prop("disabled", false);
+                    }
+                });
+            });
+
+            // SİPARİŞİ KÖKTEN SİLME
+            $(document).on("click", ".btnDeleteOrder", function() {
+                var orderId = $(this).data("id");
+                
+                if(confirm("Bu siparişi tamamen silmek istediğinize emin misiniz? Bu işlem geri alınamaz!")) {
+                    $.ajax({
+                        url: apiBaseUrl + "/Order/DeleteOrder/" + orderId,
+                        type: "DELETE",
+                        headers: { "Authorization": "Bearer " + token },
+                        success: function(d) {
+                            if(d.status) {
+                                $("#order-row-" + orderId).fadeOut(400, function() { $(this).remove(); });
+                            } else {
+                                alert(d.message);
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

@@ -85,7 +85,20 @@ namespace uyg.UI.Controllers
 
         }
 
+           // Tarayıcıya direkt /Register yazılınca çalışsın
+        [Route("Home/Register")]    // Tarayıcıya /Home/Register yazılınca da çalışsın
+        public IActionResult Register()
+        {
+            ViewBag.ApiBaseURL = _configuration["ApiBaseURL"];
+            return View();
+        }
 
+        public IActionResult Roles()
+        {
+            // Arayüzün API ile konuşabilmesi için adresi yolluyoruz
+            ViewBag.ApiBaseURL = _configuration["ApiBaseURL"];
+            return View();
+        }
 
         public IActionResult Profile()
         {
@@ -94,6 +107,55 @@ namespace uyg.UI.Controllers
             return View();
         }
 
-    }
+        public IActionResult MainPage()
+        {
+            ViewBag.ApiBaseURL = _configuration["ApiBaseURL"];
+            return View();
+        }
 
+        [Route("Home/ProductDetails/{id}")]
+        public IActionResult ProductDetails(int id)
+        {
+            ViewBag.ApiBaseURL = _configuration["ApiBaseURL"];
+            ViewBag.ProductId = id; // Hangi ürüne tıklandığını arayüze (JavaScript'e) iletiyoruz
+            return View();
+        }
+
+        [Route("Home/Favorites")]
+        public IActionResult Favorites()
+        {
+            // API adresini View'a taşıyoruz
+            ViewBag.ApiBaseURL = _configuration["ApiBaseURL"];
+            return View();
+        }
+
+        [Route("Home/Basket")]
+        public IActionResult Basket()
+        {
+            ViewBag.ApiBaseURL = _configuration["ApiBaseURL"];
+            return View();
+        }
+
+        [Route("Home/Checkout")]
+        public IActionResult Checkout()
+        {
+            ViewBag.ApiBaseURL = _configuration["ApiBaseURL"];
+            return View();
+        }
+
+        [Route("Home/MyOrders")]
+        public IActionResult MyOrders()
+        {
+            ViewBag.ApiBaseURL = _configuration["ApiBaseURL"];
+            return View();
+        }
+
+        [Route("Home/AdminOrders")]
+        public IActionResult AdminOrders()
+        {
+            ViewBag.ApiBaseURL = _configuration["ApiBaseURL"];
+            return View();
+        }
+
+    }
 }

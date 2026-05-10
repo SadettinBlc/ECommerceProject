@@ -1,0 +1,112 @@
+﻿@{
+    ViewData["Title"] = "My Orders";
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12 border-bottom border-secondary pb-2">
+        <h2 class="font-weight-bold text-light m-0"><i class="fas fa-box text-custom"></i> Order History</h2>
+    </div>
+</div>
+
+<div id="ordersContainer">
+    <div class="text-center mt-5">
+        <div class="spinner-border text-custom" role="status"></div>
+        <h5 class="mt-3 text-light">Fetching your orders...</h5>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var apiBaseUrl = "@ViewBag.ApiBaseURL";
+            var token = localStorage.getItem("token");
+
+            function showNotification(message, isSuccess) {
+                var bgColor = isSuccess ? "bg-success" : "bg-danger";
+                var toastHtml = `<div class="toast-notification ${bgColor} text-white px-4 py-3 rounded shadow-lg" style="position: fixed; bottom: 30px; right: 30px; z-index: 9999; font-weight: bold;">
+                                    <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}
+                                 </div>`;
+                var $toast = $(toastHtml).appendTo("body");
+                $toast.fadeIn(400).delay(2500).fadeOut(400, function() { $(this).remove(); });
+            }
+
+            function LoadMyOrders() {
+                $.ajax({
+                    url: apiBaseUrl + "/Order/GetMyOrders",
+                    type: "GET",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (orders) {
+                        $("#ordersContainer").empty();
+                        if (!orders || orders.length === 0) {
+                            $("#ordersContainer").html('<div class="alert alert-secondary bg-dark text-light border-secondary">You haven\'t placed any orders yet.</div>');
+                            return;
+                        }
+
+                        $.each(orders, function (i, o) {
+                            var date = new Date(o.created).toLocaleDateString();
+                            var statusColor = o.orderStatus === "İptal Edildi" ? "danger" : "warning";
+                            if(o.orderStatus === "Teslim Edildi") statusColor = "success";
+
+                            var itemsHtml = "";
+                            $.each(o.orderItems, function(j, item){
+                                itemsHtml += `<div class="text-muted small">- ${item.product.name} (${item.quantity} x ₺${item.unitPrice})</div>`;
+                            });
+
+                            var cancelBtn = (o.orderStatus === "Hazırlanıyor" || o.orderStatus === "Sipariş Alındı")
+                                ? `<button class="btn btn-sm btn-outline-danger mt-2 btnCancelOrder" data-id="${o.id}">Cancel Order</button>`
+                                : "";
+
+                            var orderHtml = `
+                                <div class="card card-custom mb-3 shadow">
+                                    <div class="card-body">
+                                        <div class="row align-items-center">
+                                            <div class="col-md-3">
+                                                <h6 class="text-custom font-weight-bold mb-0">Order ID: #${o.id}</h6>
+                                                <small class="text-muted">${date}</small>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="font-weight-bold text-light">Products:</div>
+                                                ${itemsHtml}
+                                            </div>
+                                            <div class="col-md-2 text-center">
+                                                <div class="font-weight-bold text-light">Total</div>
+                                                <div class="text-custom h5">₺${o.totalPrice}</div>
+                                            </div>
+                                            <div class="col-md-3 text-right">
+                                                <span class="badge badge-${statusColor} p-2 px-3">${o.orderStatus}</span>
+                                                <br>${cancelBtn}
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                            $("#ordersContainer").append(orderHtml);
+                        });
+                    }
+                });
+            }
+
+            LoadMyOrders();
+
+            $(document).on("click", ".btnCancelOrder", function() {
+                var orderId = $(this).data("id");
+                if(confirm("Are you sure you want to cancel this order?")) {
+                    $.ajax({
+                        url: apiBaseUrl + "/Order/CancelOrder/" + orderId,
+                        type: "POST",
+                        headers: { "Authorization": "Bearer " + token },
+                        success: function(d) {
+                            if(d.status) {
+                                showNotification(d.message, true);
+                                LoadMyOrders();
+                            } else {
+                                showNotification(d.message, false);
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

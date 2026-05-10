@@ -1,0 +1,230 @@
+﻿@{
+    ViewData["Title"] = "My Basket";
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12 border-bottom border-secondary pb-2">
+        <h2 class="font-weight-bold text-light m-0"><i class="fas fa-shopping-cart text-custom"></i> Shopping Basket</h2>
+    </div>
+</div>
+
+<div class="row" id="basketContent" style="display:none;">
+    <div class="col-lg-8 mb-4">
+        <div class="card card-custom shadow p-3" id="basketItemsContainer">
+        </div>
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card card-custom shadow p-4 sticky-top" style="top: 20px;">
+            <h4 class="font-weight-bold text-light border-bottom border-secondary pb-3 mb-4">Order Summary</h4>
+            
+            <div class="d-flex justify-content-between mb-3">
+                <span class="text-muted" style="font-size: 1.1rem;">Subtotal (<span id="summaryItemCount">0</span> items)</span>
+                <span class="text-light font-weight-bold" style="font-size: 1.1rem;" id="summarySubtotal">₺0.00</span>
+            </div>
+            <div class="d-flex justify-content-between mb-3">
+                <span class="text-muted" style="font-size: 1.1rem;">Shipping</span>
+                <span class="text-success font-weight-bold" style="font-size: 1.1rem;">Free</span>
+            </div>
+            
+            <hr class="border-secondary mb-4">
+            
+            <div class="d-flex justify-content-between mb-4">
+                <span class="text-light font-weight-bold" style="font-size: 1.3rem;">Total</span>
+                <span class="text-custom font-weight-bold" style="font-size: 1.5rem;" id="summaryTotal">₺0.00</span>
+            </div>
+
+            <button class="btn btn-warning btn-lg btn-block font-weight-bold shadow-sm" id="btnCheckout">
+                Proceed to Checkout <i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row" id="emptyBasketState" style="display:none;">
+    <div class="col-12 text-center mt-5">
+        <div class="p-5 card-custom rounded shadow">
+            <i class="fas fa-shopping-basket text-secondary mb-4" style="font-size: 5rem;"></i>
+            <h3 class="text-light font-weight-bold mb-3">Your basket is empty</h3>
+            <p class="text-muted mb-4" style="font-size: 1.1rem;">Looks like you haven't added anything to your basket yet.</p>
+            <a href="/Home/MainPage" class="btn btn-outline-warning btn-lg font-weight-bold px-5">Start Shopping</a>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var apiBaseUrl = "@ViewBag.ApiBaseURL";
+            var token = localStorage.getItem("token");
+
+            if (!token) { window.location.replace("/Login"); return; }
+
+            function showNotification(message, isSuccess) {
+                var bgColor = isSuccess ? "bg-success" : "bg-danger";
+                var toastHtml = `<div class="toast-notification ${bgColor} text-white px-4 py-3 rounded shadow-lg" style="position: fixed; bottom: 30px; right: 30px; z-index: 9999; display: none; font-weight: bold;">
+                                    <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}
+                                 </div>`;
+                var $toast = $(toastHtml).appendTo("body");
+                $toast.fadeIn(400).delay(2500).fadeOut(400, function() { $(this).remove(); });
+            }
+
+            function LoadBasket() {
+                $.ajax({
+                    url: apiBaseUrl + "/Basket/GetMyBasket",
+                    type: "GET",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (d) {
+                        var items = d.basketItems || d.BasketItems || [];
+                        if (items.length === 0) { ShowEmptyState(); return; }
+
+                        var totalCartPrice = 0;
+                        var totalItemCount = 0;
+                        $("#basketItemsContainer").empty();
+
+                        $.each(items, function (i, item) {
+                            var p = item.product || item.Product;
+                            var imgPath = (p.photoUrl || p.PhotoUrl) ?
+                                          (apiBaseUrl.replace('/api', '') + "/" + (p.photoUrl || p.PhotoUrl).replace(/\\/g, '/')) :
+                                          "https://dummyimage.com/200x200/1e1e1e/d4af37&text=No+Image";
+                            
+                            var pName = p.name || p.Name;
+                            var pPrice = p.price || p.Price;
+                            var quantity = item.quantity || item.Quantity;
+                            var itemId = item.id || item.Id;
+                            var pId = p.id || p.Id; // Ürün ID'si
+                            
+                            var itemTotal = pPrice * quantity;
+                            totalCartPrice += itemTotal;
+                            totalItemCount += quantity;
+
+                            var itemHtml = `
+                                <div class="row align-items-center mb-3 pb-3 border-bottom border-secondary basket-item-row" id="basket-item-${itemId}">
+                                    <div class="col-md-2 col-4 mb-2 mb-md-0">
+                                        <img src="${imgPath}" class="img-fluid rounded border border-secondary" style="object-fit: cover; height: 100px; width: 100%;">
+                                    </div>
+                                    <div class="col-md-4 col-8 mb-2 mb-md-0">
+                                        <h5 class="text-light font-weight-bold mb-1">${pName}</h5>
+                                        <span class="text-custom font-weight-bold">₺${pPrice} <small class="text-muted">/ each</small></span>
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <div class="input-group input-group-sm" style="width: 120px;">
+                                            <div class="input-group-prepend">
+                                                <button class="btn btn-dark border-secondary text-light btnDecreaseQty" data-productid="${pId}" data-itemid="${itemId}" data-qty="${quantity}"><i class="fas fa-minus"></i></button>
+                                            </div>
+                                            <input type="text" class="form-control bg-dark text-warning border-secondary text-center font-weight-bold px-1" value="${quantity}" readonly>
+                                            <div class="input-group-append">
+                                                <button class="btn btn-dark border-secondary text-light btnIncreaseQty" data-productid="${pId}"><i class="fas fa-plus"></i></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2 col-4 text-right">
+                                        <h5 class="text-light font-weight-bold mb-0">₺${itemTotal}</h5>
+                                    </div>
+                                    <div class="col-md-1 col-2 text-right">
+                                        <button class="btn btn-outline-danger btn-sm btnRemoveItem" data-itemid="${itemId}" title="Remove Item Entirely">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            `;
+                            $("#basketItemsContainer").append(itemHtml);
+                        });
+
+                        $("#summaryItemCount").text(totalItemCount);
+                        $("#summarySubtotal, #summaryTotal").text("₺" + totalCartPrice);
+                        $("#emptyBasketState").hide();
+                        $("#basketContent").fadeIn();
+                        
+                        // Rozeti güncelle
+                        if(typeof window.UpdateCartCount === "function") window.UpdateCartCount();
+                    },
+                    error: function(xhr) {
+                        if (xhr.status === 404) { ShowEmptyState(); }
+                        else { showNotification("Failed to load basket.", false); }
+                    }
+                });
+            }
+
+            function ShowEmptyState() {
+                $("#basketContent").hide();
+                if(typeof window.UpdateCartCount === "function") window.UpdateCartCount();
+                $("#emptyBasketState").fadeIn();
+            }
+
+            LoadBasket();
+
+            // --- YENİ: MİKTAR ARTIRMA (+) ---
+            $(document).on("click", ".btnIncreaseQty", function() {
+                var btn = $(this);
+                var pId = btn.data("productid");
+                btn.prop("disabled", true);
+
+                $.ajax({
+                    url: apiBaseUrl + "/Basket/AddItem?productId=" + pId + "&quantity=1",
+                    type: "POST",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function(d) {
+                        if(d.status) { LoadBasket(); }
+                        else { showNotification(d.message, false); btn.prop("disabled", false); }
+                    }
+                });
+            });
+
+            // --- YENİ: MİKTAR AZALTMA (-) ---
+            $(document).on("click", ".btnDecreaseQty", function() {
+                var btn = $(this);
+                var pId = btn.data("productid");
+                var itemId = btn.data("itemid");
+                var currentQty = parseInt(btn.data("qty"));
+                btn.prop("disabled", true);
+
+                if (currentQty > 1) {
+                    // Miktar 1'den büyükse, API'ye -1 göndererek veritabanından eksiltiyoruz
+                    $.ajax({
+                        url: apiBaseUrl + "/Basket/AddItem?productId=" + pId + "&quantity=-1",
+                        type: "POST",
+                        headers: { "Authorization": "Bearer " + token },
+                        success: function(d) { LoadBasket(); }
+                    });
+                } else {
+                    // Miktar 1 ise, tekrar eksiye bastığında ürünü sepetten tamamen uçur
+                    $.ajax({
+                        url: apiBaseUrl + "/Basket/RemoveItem/" + itemId,
+                        type: "DELETE",
+                        headers: { "Authorization": "Bearer " + token },
+                        success: function(d) {
+                            showNotification("Item removed from basket.", true);
+                            LoadBasket();
+                        }
+                    });
+                }
+            });
+
+            // --- KÖKTEN SİLME (ÇÖP KUTUSU) ---
+            $(document).on("click", ".btnRemoveItem", function() {
+                var btn = $(this);
+                var itemId = btn.data("itemid");
+                if(confirm("Are you sure you want to completely remove this item?")) {
+                    btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i>');
+                    $.ajax({
+                        url: apiBaseUrl + "/Basket/RemoveItem/" + itemId,
+                        type: "DELETE",
+                        headers: { "Authorization": "Bearer " + token },
+                        success: function(d) {
+                            if(d.status) {
+                                showNotification("Item completely removed.", true);
+                                LoadBasket();
+                            }
+                        }
+                    });
+                }
+            });
+
+            $("#btnCheckout").click(function() {
+                window.location.href = "/Home/Checkout";
+            });
+        });
+    </script>
+}

@@ -232,5 +232,24 @@ namespace ECommerce.API.Controllers
 
             return Ok(order);
         }
+
+        [HttpDelete("{orderId}")]
+        [Authorize] // Sadece giriş yapmış yetkili silebilir
+        public async Task<ResultDto> DeleteOrder(int orderId)
+        {
+            var order = await _orderRepository.GetByIdAsync(orderId);
+            if (order == null)
+            {
+                result.Status = false;
+                result.Message = "Sipariş bulunamadı.";
+                return result;
+            }
+
+            await _orderRepository.DeleteAsync(orderId);
+            result.Status = true;
+            result.Message = "Sipariş sistemden tamamen silindi.";
+            return result;
+        }
+
     }
 }

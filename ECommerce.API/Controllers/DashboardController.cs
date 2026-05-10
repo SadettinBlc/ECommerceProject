@@ -8,7 +8,7 @@ namespace ECommerce.API.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    // [Authorize(Roles = "Admin")] // Test aşamasında kapalı kalabilir
+    [Authorize(Roles = "Admin")] // KİLİT AKTİF EDİLDİ
     public class DashboardController : ControllerBase
     {
         private readonly IRepository<Product> _productRepository;
@@ -31,11 +31,9 @@ namespace ECommerce.API.Controllers
             var totalUsers = _userManager.Users.Count();
             var totalProducts = _productRepository.Where(p => p.IsActive).Count();
 
-            // Tüm aktif siparişlerin toplam tutarını hesaplar
             var totalRevenue = _orderRepository.Where(o => o.IsActive).Sum(o => o.TotalPrice);
             var totalOrders = _orderRepository.Where(o => o.IsActive).Count();
 
-            // Sadece sayıları dönen isimsiz (anonymous) bir obje gönderiyoruz
             return Ok(new
             {
                 TotalUsers = totalUsers,
