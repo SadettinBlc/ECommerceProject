@@ -163,10 +163,15 @@ namespace ECommerce.API.Controllers
             }
 
             user.FullName = dto.FullName;
+            user.Email = dto.Email;
+            user.UserName = dto.Email; // Girişte email kullanıldığı için kullanıcı adını da güncelliyoruz
             user.PhoneNumber = dto.PhoneNumber;
             user.Address = dto.Address;
             user.Age = dto.Age;
             user.Gender = dto.Gender;
+
+            // RESİM YENİDEN YÜKLENMİŞSE (BOŞ DEĞİLSE) VERİTABANINDA GÜNCELLE
+            if (!string.IsNullOrEmpty(dto.PhotoUrl)) { user.PhotoUrl = dto.PhotoUrl; }
 
             var updateResult = await _userManager.UpdateAsync(user);
 

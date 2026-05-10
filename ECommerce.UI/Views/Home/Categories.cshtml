@@ -1,0 +1,179 @@
+﻿@{
+    ViewData["Title"] = "Categories";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml"; // Admin panelinin şablonunu kullan diyoruz!
+}
+<div class="row">
+    <div class="col-md-8" id="divList">
+        <div class="card">
+            <div class="card-header">
+                <h3>Kategoriler</h3>
+            </div>
+            <div class="card-body">
+
+                <table class="table" id="tbCategoryList">
+                    <thead>
+                        <tr>
+                            <th>Adı</th>
+                            <th>Ürün Sayısı</th>
+                            <th>Kayıt Tarihi</th>
+                            <th>Düzenleme Tarihi</th>
+                            <th>Durumu</th>
+                            <th>İşlemler</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+
+            </div>
+            <div class="card-footer"></div>
+        </div>
+    </div>
+    <div class="col-md-4" id="divAddUpdate">
+
+        <div class="card">
+            <div class="card-header"><h4>Kategori Ekle - Güncelle</h4></div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label>Kategori Adı</label>
+                    <input type="hidden" class="form-control" id="txtId" />
+                    <input type="text" class="form-control" id="txtName" />
+                </div>
+                <div class="mb-3">
+                  
+                    <input type="checkbox" class="form-check-inline" id="cbIsActive" />
+                    <label>Aktif</label>
+                </div>
+                <div class="mb-3">
+                    <button class="btn btn-primary btn-circle" title="Kaydet" id="btnSave"><i class="fa fa-save"></i></button>
+                    <button class="btn btn-secondary btn-circle" title="Vazgeç" id="btnCancel"><i class="fa fa-arrow-left"></i></button>
+                    <button class="btn btn-warning btn-circle" title="Düzenle" id="btnEdit"><i class="fa fa-edit"></i></button>
+                    <button class="btn btn-danger btn-circle" title="Sil" id="btnDelete"><i class="fa fa-trash"></i></button>
+
+                   
+                    <div class="alert mt-3" id="divResult"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+                $(document).ready(function(){
+            var apiBaseUrl="@ViewBag.ApiBaseURL";
+            if(!localStorage.getItem("token")){ location.href="/Login"; return false; }
+            var token=localStorage.getItem("token");
+    
+            GetCategoryList();
+            $("#btnCancel, #btnEdit, #btnDelete").hide();
+
+            function FormatDate(d){ return d ? d.split("T")[0] : ""; }
+
+            // 1. LİSTELEME ADRESİ DÜZELTİLDİ (/List eklendi)
+            function GetCategoryList(){
+                $.ajax({
+                 url: apiBaseUrl + "/Category/List",
+                 type: "GET",
+                 headers: { "Authorization": "Bearer " + token },
+                 success: function (d) { CategoryToTable(d); }
+                });
+            }
+
+            function CategoryToTable(data){
+                $("#tbCategoryList tbody").empty();
+                var row="";
+                $.each(data,function(i,item){
+                    var bg=item.isActive ? 'bg-success': 'bg-danger';
+                    var status=item.isActive ? 'Aktif': 'Pasif';
+                    row+="<tr>";
+                    row+="<td>"+item.name+"</td>";
+                    row+="<td>"+(item.productCount || 0)+"</td>";
+                    row+="<td>"+FormatDate(item.created)+"</td>";
+                    row+="<td>"+FormatDate(item.updated)+"</td>";
+                    row+="<td><span class='text-white badge " + bg +"'>"+status+"</span></td>";
+                    row+='<td><a class="btn btn-primary btn-circle" href="/Products/'+item.id+'"><i class="fa fa-list"></i></a><button class="btn btn-warning btn-circle btnEdit" data-id="'+item.id+'"><i class="fa fa-edit"></i></button></td>';
+                    row+="</tr>";
+                });
+                $("#tbCategoryList tbody").append(row);
+            }
+
+            // 2. EKLEME ADRESİ DÜZELTİLDİ (/Add eklendi)
+            $("#btnSave").click(function(){
+               if(!$("#txtName").val()){
+                   $("#divResult").show().removeClass().addClass("alert alert-danger mt-3").html("Kategori Adı Giriniz!").fadeOut(3000); return false;
+               }
+               var category= { name: $("#txtName").val(), IsActive: $("#cbIsActive").is(":checked") };
+
+                $.ajax({
+                   url: apiBaseUrl + "/Category/Add",
+                   type: "POST",
+                   headers: { "Authorization": "Bearer " + token },
+                   data: JSON.stringify(category),
+                   contentType: "application/json",
+                   success: function (d) {
+                        if (d.status){
+                            $("#divResult").show().removeClass().addClass("alert alert-success mt-3").html(d.message).fadeOut(3000);
+                            GetCategoryList();
+                        } else {
+                            $("#divResult").show().removeClass().addClass("alert alert-danger mt-3").html(d.message).fadeOut(3000);
+                        }
+                   }
+                });
+            });
+
+            // 3. GÜNCELLEME İÇİN VERİ ÇEKME ADRESİ (Eğer GetById apisi yoksa Update apisini kullanırız ama şimdilik listeyi kullanıyoruz)
+            $(document).on("click",".btnEdit",function(){
+                var id=$(this).attr("data-id");
+                // Kategoriyi satırdan almak yerine id'sini saklıyoruz
+                $("#btnSave").hide();
+                $("#btnCancel, #btnEdit, #btnDelete").show();
+                $("#txtId").val(id);
+                $("#txtName").val($(this).closest("tr").find("td:eq(0)").text()); // Tablodaki adı al
+                $("#cbIsActive").prop("checked", $(this).closest("tr").find("td:eq(4)").text() === "Aktif");
+            });
+
+            $("#btnCancel").click(function(){
+                 $("#btnCancel, #btnEdit, #btnDelete").hide();
+                 $("#btnSave").show();
+                 $("#txtName, #txtId").val("");
+                 $("#cbIsActive").prop("checked",false);
+            });
+
+            // 4. GÜNCELLEME ADRESİ DÜZELTİLDİ (/Update eklendi)
+            $("#btnEdit").click(function(){
+                var category= { id: $("#txtId").val(), name: $("#txtName").val(), IsActive: $("#cbIsActive").is(":checked") };
+                $.ajax({
+                   url: apiBaseUrl + "/Category/Update",
+                   type: "PUT",
+                   headers: { "Authorization": "Bearer " + token },
+                   data: JSON.stringify(category),
+                   contentType: "application/json",
+                   success: function (d) {
+                        if (d.status){
+                            $("#divResult").show().removeClass().addClass("alert alert-success mt-3").html(d.message).fadeOut(3000);
+                            GetCategoryList(); $("#btnCancel").click();
+                        }
+                   }
+                });
+            });
+
+            // 5. SİLME ADRESİ DÜZELTİLDİ (/Delete eklendi)
+            $("#btnDelete").click(function(){
+                  var id=$("#txtId").val();
+                  $.ajax({
+                       url: apiBaseUrl + "/Category/Delete/"+id,
+                       type: "DELETE",
+                       headers: { "Authorization": "Bearer " + token },
+                       contentType: "application/json",
+                       success: function (d) {
+                            if (d.status){
+                                $("#divResult").show().removeClass().addClass("alert alert-success mt-3").html(d.message).fadeOut(3000);
+                                GetCategoryList(); $("#btnCancel").click();
+                            }
+                       }
+                  });
+             });
+        });
+    </script>
+}

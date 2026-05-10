@@ -1,0 +1,201 @@
+﻿@{
+    ViewData["Title"] = "Profilim";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 bg-primary">
+                <h6 class="m-0 font-weight-bold text-white">Kişisel Bilgilerim</h6>
+            </div>
+            <div class="card-body">
+                
+                <div class="text-center mb-4">
+                    <img id="profilePicture" src="/images/profil.jpg" class="img-profile rounded-circle shadow-sm" style="width: 130px; height: 130px; object-fit: cover; cursor: pointer; border: 3px solid #4e73df;" title="Fotoğrafı Değiştirmek İçin Tıklayın" />
+                    <input type="file" id="fileProfileImage" class="d-none" accept="image/*" />
+                    <div id="uploadResult" class="mt-2 text-sm font-weight-bold" style="display:none;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label class="font-weight-bold">E-Posta Adresi</label>
+                    <input type="email" class="form-control" id="txtEmail">
+                </div>
+                <div class="form-group">
+                    <label class="font-weight-bold">Ad Soyad</label>
+                    <input type="text" class="form-control" id="txtFullName">
+                </div>
+                <div class="form-group">
+                    <label class="font-weight-bold">Telefon</label>
+                    <input type="text" class="form-control" id="txtPhone">
+                </div>
+                <div class="form-group">
+                    <label class="font-weight-bold">Adres</label>
+                    <textarea class="form-control" id="txtAddress" rows="3"></textarea>
+                </div>
+                <div class="row">
+                    <div class="col-6 form-group">
+                        <label class="font-weight-bold">Yaş</label>
+                        <input type="number" class="form-control" id="txtAge">
+                    </div>
+                    <div class="col-6 form-group">
+                        <label class="font-weight-bold">Cinsiyet</label>
+                        <select class="form-control" id="cbGender">
+                            <option value="Belirtilmedi">Belirtilmedi</option>
+                            <option value="Erkek">Erkek</option>
+                            <option value="Kadın">Kadın</option>
+                        </select>
+                    </div>
+                </div>
+                <hr>
+                <button class="btn btn-success w-100" id="btnUpdateProfile"><i class="fa fa-save"></i> Bilgileri Güncelle</button>
+                <div id="profileResult" class="alert mt-3" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header py-3 bg-danger">
+                <h6 class="m-0 font-weight-bold text-white">Güvenlik ve Şifre</h6>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label class="font-weight-bold">Mevcut Şifreniz</label>
+                    <input type="password" class="form-control" id="txtCurrentPassword" placeholder="Şu anki şifreniz...">
+                </div>
+                <div class="form-group">
+                    <label class="font-weight-bold">Yeni Şifre</label>
+                    <input type="password" class="form-control" id="txtNewPassword" placeholder="Yeni şifrenizi belirleyin...">
+                </div>
+                <hr>
+                <button class="btn btn-danger w-100" id="btnChangePassword"><i class="fa fa-key"></i> Şifreyi Değiştir</button>
+                <div id="passwordResult" class="alert mt-3" style="display:none;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var apiBaseUrl = "@ViewBag.ApiBaseURL";
+            var token = localStorage.getItem("token");
+            var currentUploadedPhotoUrl = "";
+
+            function GetProfile() {
+                $.ajax({
+                    url: apiBaseUrl + "/User/GetMyProfile",
+                    type: "GET",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (d) {
+                        var p = d.data || d;
+                        
+                        $("#txtEmail").val(p.email || p.Email);
+                        $("#txtFullName").val(p.fullName || p.FullName);
+                        $("#txtPhone").val(p.phoneNumber || p.PhoneNumber);
+                        $("#txtAddress").val(p.address || p.Address);
+                        $("#txtAge").val(p.age || p.Age);
+                        $("#cbGender").val(p.gender || p.Gender);
+
+                        // Fotoğraf Yolu Çözücü
+                        var photo = p.photoUrl || p.PhotoUrl;
+                        if(photo) {
+                            if(photo === "profil.jpg") {
+                                $("#profilePicture").attr("src", "/images/profil.jpg"); // UI'daki varsayılan resim
+                            } else {
+                                // API'den gelen gerçek resmi göster
+                                var photoLink = apiBaseUrl.replace('/api', '') + "/" + photo.replace(/\\/g, '/');
+                                $("#profilePicture").attr("src", photoLink);
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Sayfa açılışında çalıştır
+            GetProfile();
+
+            $("#profilePicture").click(function(){ $("#fileProfileImage").click(); });
+
+            $("#fileProfileImage").change(function () {
+                var file = $(this).prop('files')[0];
+                if (file) {
+                    var formData = new FormData();
+                    formData.append("File", file);
+                    
+                    $("#uploadResult").show().removeClass().addClass("text-info").html("Resim sunucuya yükleniyor...");
+
+                    $.ajax({
+                        url: apiBaseUrl + "/Upload/UploadImage",
+                        type: "POST",
+                        headers: { "Authorization": "Bearer " + token },
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (data) {
+                            if(data && data.url) {
+                                currentUploadedPhotoUrl = data.url;
+                                var newPhotoLink = apiBaseUrl.replace('/api', '') + "/" + data.url.replace(/\\/g, '/');
+                                $("#profilePicture").attr("src", newPhotoLink);
+                                $("#uploadResult").show().removeClass().addClass("text-success").html("Resim yüklendi! Kaydetmek için 'Bilgileri Güncelle' butonuna basın.").fadeOut(5000);
+                            }
+                        },
+                        error: function (xhr) {
+                            $("#uploadResult").show().removeClass().addClass("text-danger").html("Resim yüklenemedi!");
+                        }
+                    });
+                }
+            });
+
+            $("#btnUpdateProfile").click(function () {
+                var dto = {
+                    fullName: $("#txtFullName").val(),
+                    email: $("#txtEmail").val(), // E-posta eklendi
+                    phoneNumber: $("#txtPhone").val(),
+                    address: $("#txtAddress").val(),
+                    age: parseInt($("#txtAge").val()) || 0,
+                    gender: $("#cbGender").val(),
+                    photoUrl: currentUploadedPhotoUrl
+                };
+
+                $.ajax({
+                    url: apiBaseUrl + "/User/UpdateProfile",
+                    type: "PUT",
+                    headers: { "Authorization": "Bearer " + token },
+                    data: JSON.stringify(dto),
+                    contentType: "application/json",
+                    success: function (d) {
+                        var cls = d.status ? "alert-success" : "alert-danger";
+                        $("#profileResult").show().removeClass().addClass("alert " + cls).html(d.message).fadeOut(4000);
+                        
+                        if(d.status) {
+                             // E-posta değiştiyse token geçersiz kalabilir diye tekrar login olmak en sağlıklısıdır.
+                             setTimeout(function() {
+                                alert("Bilgileriniz güncellendi! E-posta veya resim değişikliğinin tam yansıması için lütfen tekrar giriş yapın.");
+                                localStorage.removeItem("token");
+                                location.href = "/Login";
+                             }, 2000);
+                        }
+                    }
+                });
+            });
+
+            $("#btnChangePassword").click(function () {
+                var dto = { currentPassword: $("#txtCurrentPassword").val(), newPassword: $("#txtNewPassword").val() };
+                if(!dto.currentPassword || !dto.newPassword) {
+                    $("#passwordResult").show().removeClass().addClass("alert alert-warning").html("Lütfen şifre alanlarını doldurun!").fadeOut(4000); return;
+                }
+                $.ajax({
+                    url: apiBaseUrl + "/User/ChangePassword", type: "POST", headers: { "Authorization": "Bearer " + token },
+                    data: JSON.stringify(dto), contentType: "application/json",
+                    success: function (d) {
+                        var cls = d.status ? "alert-success" : "alert-danger";
+                        $("#passwordResult").show().removeClass().addClass("alert " + cls).html(d.message).fadeOut(4000);
+                        if(d.status) { $("#txtCurrentPassword, #txtNewPassword").val(""); }
+                    }
+                });
+            });
+        });
+    </script>
+}

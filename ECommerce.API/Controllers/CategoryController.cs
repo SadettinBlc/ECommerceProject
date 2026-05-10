@@ -3,6 +3,7 @@ using ECommerce.API.Models;
 using ECommerce.API.Repositories;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace ECommerce.API.Controllers
 {
@@ -19,22 +20,39 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpGet]
-        public async Task<IActionResult> List()
+        public IActionResult List()
         {
-            var categories = await _categoryRepository.GetAllAsync();
+            var categories = _categoryRepository.Where(c => true)
+                .Include(c => c.Products)
+                .Select(c => new
+                {
+                    Id = c.Id,
+                    Name = c.Name,
+                    IsActive = c.IsActive,
+                    Created = c.Created,
+                    Updated = c.Updated,
+                    ProductCount = c.Products != null ? c.Products.Count : 0
+                }).ToList();
             return Ok(categories);
         }
 
-        [HttpPost]
-        public async Task<ResultDto> Add(CategoryAddDto dto) // Artık Category değil, ufacık DTO'yu alıyoruz
+        [HttpGet("{id}")]
+        public IActionResult GetById(int id)
         {
-            // DTO'dan gelen ufak veriyi, asıl veritabanı modelimize (Category) çeviriyoruz
+            var category = _categoryRepository.Where(c => c.Id == id).FirstOrDefault();
+            if (category == null) return NotFound();
+            return Ok(category);
+        }
+
+        [HttpPost]
+        public async Task<ResultDto> Add(CategoryAddDto dto)
+        {
             var newCategory = new Category
             {
                 Name = dto.Name,
                 Created = DateTime.Now,
                 Updated = DateTime.Now,
-                IsActive = true
+                IsActive = true // DTO'da olmadığı için varsayılan olarak Aktif yapıyoruz
             };
 
             await _categoryRepository.AddAsync(newCategory);
@@ -45,12 +63,9 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpPut]
-        // [Authorize(Roles = "Admin")]
         public async Task<ResultDto> Update(CategoryUpdateDto dto)
         {
-            // Önce güncellenecek kategoriyi veritabanından buluyoruz
             var category = _categoryRepository.Where(c => c.Id == dto.Id).FirstOrDefault();
-
             if (category == null)
             {
                 result.Status = false;
@@ -58,9 +73,8 @@ namespace ECommerce.API.Controllers
                 return result;
             }
 
-            // Sadece değişmesine izin verdiğimiz alanları güncelliyoruz
             category.Name = dto.Name;
-            category.IsActive = dto.IsActive;
+            category.IsActive = dto.IsActive; // Update DTO'sunda var, sorun yok
             category.Updated = DateTime.Now;
 
             await _categoryRepository.UpdateAsync(category);
@@ -71,12 +85,11 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        //[Authorize(Roles = "Admin")]
         public async Task<ResultDto> Delete(int id)
         {
             await _categoryRepository.DeleteAsync(id);
             result.Status = true;
-            result.Message = "Ürün sistemden silindi.";
+            result.Message = "Kategori sistemden silindi.";
             return result;
         }
     }

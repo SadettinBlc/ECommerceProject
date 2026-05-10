@@ -16,7 +16,10 @@ builder.Services.AddControllers()
     {
         // JSON çeviriciye "Sonsuz döngüye girme, referansları koru" emrini veriyoruz
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
-    }); builder.Services.AddEndpointsApiExplorer();
+    });
+
+builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(c =>
 {
     c.SwaggerDoc("v1", new OpenApiInfo { Title = "ECommerce.API", Version = "v1" });
@@ -36,6 +39,17 @@ builder.Services.AddSwaggerGen(c =>
         },
         new string[] {}
     }
+    });
+}); // <--- SWAGGER BURADA BİTTİ
+
+// CORS İznini tanımlıyoruz (Swagger'ın dışına çıkardık!)
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyHeader()
+              .AllowAnyMethod();
     });
 });
 
@@ -86,7 +100,10 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
+app.UseCors(); // CORS'u devreye aldık
+
 app.UseHttpsRedirection();
+app.UseStaticFiles(); // Bu kod, API'nin wwwroot veya Uploads klasöründeki resimleri dışarıya açmasını sağlar!
 
 // Kimlik Doğrulama (Authentication) ve Yetkilendirme (Authorization)
 app.UseAuthentication();
