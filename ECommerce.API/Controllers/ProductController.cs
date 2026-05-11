@@ -23,7 +23,7 @@ namespace ECommerce.API.Controllers
         }
         // 1. GÜNCELLENMİŞ LİSTELEME METODU (Özellik filtresi eklendi)
         [HttpGet]
-        public IActionResult List(int page = 1, int pageSize = 20, string search = "", int? categoryId = null, string sortBy = "", [FromQuery] string features = "")
+        public IActionResult List(int page = 1, int pageSize = 12, string search = "", int? categoryId = null, string sortBy = "", [FromQuery] string features = "")
         {
             var query = _productRepository.Where(p => p.IsActive)
                                           .Include(p => p.Category)

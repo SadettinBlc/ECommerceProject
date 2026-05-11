@@ -1,0 +1,114 @@
+﻿@{
+    ViewData["Title"] = "Contact Us";
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12 border-bottom border-secondary pb-2">
+        <h2 class="font-weight-bold text-light m-0"><i class="fas fa-headset text-custom"></i> Contact & Support</h2>
+        <p class="text-muted mt-2">We're here to help. Reach out to us for any questions regarding your orders, returns, or general inquiries.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-5 mb-4">
+        
+        <div class="card card-custom shadow p-4 mb-4 h-100">
+            <h5 class="text-light mb-4 border-bottom border-secondary pb-2"><i class="fas fa-address-book text-custom"></i> Get in Touch</h5>
+            
+            <div class="d-flex align-items-start mb-3">
+                <i class="fas fa-map-marker-alt text-custom mt-1 mr-3" style="font-size: 1.2rem;"></i>
+                <div>
+                    <h6 class="text-light font-weight-bold mb-1">Headquarters</h6>
+                    <p class="text-muted mb-0">Tahılpazarı Mah. Şarampol Cd.<br>Near MarkAntalya AVM<br>Muratpaşa / Antalya, Türkiye</p>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-start mb-3">
+                <i class="fas fa-envelope text-custom mt-1 mr-3" style="font-size: 1.2rem;"></i>
+                <div>
+                    <h6 class="text-light font-weight-bold mb-1">Email Support</h6>
+                    <p class="text-muted mb-0">sadettinbmda@outlook.com<br><small class="text-secondary">Average response time: 2-4 hours</small></p>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-start mb-4">
+                <i class="fas fa-phone-alt text-custom mt-1 mr-3" style="font-size: 1.2rem;"></i>
+                <div>
+                    <h6 class="text-light font-weight-bold mb-1">Customer Service</h6>
+                    <p class="text-muted mb-0">+90 (850) 123 45 67<br><small class="text-secondary">Mon-Fri: 09:00 - 18:00</small></p>
+                </div>
+            </div>
+
+            <h5 class="text-light mb-3 border-bottom border-secondary pb-2"><i class="fas fa-box-open text-custom"></i> Returns & Exchanges</h5>
+            <p class="text-muted text-sm">
+                You can return any unused item within <strong>14 days</strong> of delivery.
+                Our official logistics partner is <strong>Yurtiçi Kargo</strong>.
+                Please use the return code <strong>#RET-2026</strong> when handing your package to the courier for free return shipping.
+            </p>
+        </div>
+    </div>
+
+    <div class="col-lg-7 mb-4">
+        <div class="card card-custom shadow p-4 h-100">
+            <h5 class="text-light mb-4 border-bottom border-secondary pb-2"><i class="fas fa-paper-plane text-custom"></i> Send us a Message</h5>
+            
+            <form id="contactForm" onsubmit="return false;">
+                <div class="row">
+                    <div class="col-md-6 form-group">
+                        <label class="text-muted font-weight-bold">Your Name</label>
+                        <input type="text" class="form-control bg-dark text-light border-secondary" id="contactName" placeholder="John Doe" required>
+                    </div>
+                    <div class="col-md-6 form-group">
+                        <label class="text-muted font-weight-bold">Email Address</label>
+                        <input type="email" class="form-control bg-dark text-light border-secondary" id="contactEmail" placeholder="john@example.com" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="text-muted font-weight-bold">Subject / Order ID</label>
+                    <input type="text" class="form-control bg-dark text-light border-secondary" id="contactSubject" placeholder="e.g. Return Request for Order #1024" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="text-muted font-weight-bold">Message</label>
+                    <textarea class="form-control bg-dark text-light border-secondary" id="contactMessage" rows="5" placeholder="How can we help you today?" required></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-warning btn-lg btn-block font-weight-bold mt-4 shadow" id="btnSendMessage">
+                    <i class="fas fa-envelope"></i> Send Message
+                </button>
+                <div id="contactResult" class="mt-3 text-center font-weight-bold" style="display:none; font-size: 1rem;"></div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            // Görsel amaçlı sahte form gönderimi (API bağlantısı gerektirmez)
+            $("#contactForm").submit(function (e) {
+                e.preventDefault();
+                
+                var btn = $("#btnSendMessage");
+                btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i> Sending...');
+
+                // 1.5 saniyelik sahte yükleme süresi
+                setTimeout(function() {
+                    $("#contactResult").removeClass().addClass("text-success mt-3").html('<i class="fas fa-check-circle"></i> Thank you! Your message has been sent successfully. We will get back to you shortly.').fadeIn();
+                    
+                    // Formu temizle
+                    $("#contactName").val('');
+                    $("#contactEmail").val('');
+                    $("#contactSubject").val('');
+                    $("#contactMessage").val('');
+                    
+                    btn.prop("disabled", false).html('<i class="fas fa-envelope"></i> Send Message');
+                    
+                    setTimeout(function(){ $("#contactResult").fadeOut(); }, 5000);
+                }, 1500);
+            });
+        });
+    </script>
+}

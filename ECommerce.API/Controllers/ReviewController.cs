@@ -73,5 +73,87 @@ namespace ECommerce.API.Controllers
                 })
             });
         }
+
+        [HttpGet]
+        [Authorize]
+        public IActionResult GetMyReviews()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var reviews = _reviewRepository.Where(r => r.AppUserId == userId && r.IsActive)
+                .Include(r => r.Product)
+                .OrderByDescending(r => r.Created)
+                .Select(r => new {
+                    r.Id,
+                    r.Comment,
+                    r.Rating,
+                    r.Created,
+                    ProductName = r.Product.Name,
+                    ProductId = r.ProductId
+                }).ToList();
+
+            return Ok(reviews);
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<ResultDto> DeleteReview(int id)
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            var review = _reviewRepository.Where(r => r.Id == id && r.AppUserId == userId).FirstOrDefault();
+
+            if (review == null)
+            {
+                result.Status = false;
+                result.Message = "Yorum bulunamadı veya silme yetkiniz yok.";
+                return result;
+            }
+
+            await _reviewRepository.DeleteAsync(id);
+            result.Status = true;
+            result.Message = "Yorumunuz başarıyla silindi.";
+            return result;
+        }
+
+        [HttpGet]
+        [Authorize] // Güvenlik için Admin rolü eklenebilir: [Authorize(Roles = "Admin")]
+        public IActionResult GetAllReviewsAdmin()
+        {
+            // Tüm yorumları ürünü ve yazan kişiyi içerecek şekilde çekiyoruz
+            var reviews = _reviewRepository.Where(r => r.IsActive)
+                .Include(r => r.Product)
+                .Include(r => r.AppUser)
+                .OrderByDescending(r => r.Created)
+                .Select(r => new {
+                    r.Id,
+                    r.Comment,
+                    r.Rating,
+                    r.Created,
+                    ProductName = r.Product.Name,
+                    UserName = r.AppUser.FullName ?? r.AppUser.UserName
+                }).ToList();
+
+            return Ok(reviews);
+        }
+
+        [HttpDelete("{id}")]
+        [Authorize]
+        public async Task<ResultDto> AdminDeleteReview(int id)
+        {
+            ResultDto result = new ResultDto();
+            var review = await _reviewRepository.GetByIdAsync(id);
+
+            if (review == null)
+            {
+                result.Status = false;
+                result.Message = "Yorum bulunamadı.";
+                return result;
+            }
+
+            await _reviewRepository.DeleteAsync(id);
+            result.Status = true;
+            result.Message = "Yorum sistemden tamamen silindi.";
+            return result;
+        }
+
     }
 }

@@ -1,0 +1,118 @@
+﻿@{
+    ViewData["Title"] = "Yorum Yönetimi";
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
+}
+
+<div class="container-fluid">
+    <h1 class="h3 mb-4 text-gray-800">Müşteri Değerlendirmeleri</h1>
+
+    <div class="card shadow mb-4">
+        <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+            <h6 class="m-0 font-weight-bold text-primary">Tüm Ürün Yorumları</h6>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-bordered table-hover" width="100%" cellspacing="0">
+                    <thead class="bg-light">
+                        <tr>
+                            <th>Tarih</th>
+                            <th>Kullanıcı</th>
+                            <th>Ürün</th>
+                            <th>Puan</th>
+                            <th style="width: 40%;">Yorum</th>
+                            <th>İşlem</th>
+                        </tr>
+                    </thead>
+                    <tbody id="adminReviewList">
+                        <tr><td colspan="6" class="text-center"><i class="fas fa-spinner fa-spin"></i> Yorumlar yükleniyor...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var apiBaseUrl = "@ViewBag.ApiBaseURL";
+            if (!apiBaseUrl || apiBaseUrl === "") { apiBaseUrl = "https://localhost:7073/api"; }
+            
+            var token = localStorage.getItem("token");
+
+            function LoadAllReviews() {
+                $.ajax({
+                    url: apiBaseUrl + "/Review/GetAllReviewsAdmin",
+                    type: "GET",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (reviews) {
+                        $("#adminReviewList").empty();
+                        
+                        if (!reviews || reviews.length === 0) {
+                            $("#adminReviewList").html('<tr><td colspan="6" class="text-center text-muted">Henüz hiç yorum yapılmamış.</td></tr>');
+                            return;
+                        }
+
+                        $.each(reviews, function (i, r) {
+                            var date = new Date(r.created).toLocaleDateString();
+                            var stars = "⭐".repeat(r.rating || r.Rating);
+                            
+                            var row = `
+                                <tr id="review-row-${r.id}">
+                                    <td>${date}</td>
+                                    <td class="font-weight-bold">${r.userName || r.UserName}</td>
+                                    <td class="text-primary">${r.productName || r.ProductName}</td>
+                                    <td>${stars}</td>
+                                    <td>${r.comment || r.Comment}</td>
+                                    <td class="text-center">
+                                        <button class="btn btn-danger btn-sm btnDeleteReview" data-id="${r.id}" title="Yorumu Sil">
+                                            <i class="fas fa-trash"></i> Sil
+                                        </button>
+                                    </td>
+                                </tr>
+                            `;
+                            $("#adminReviewList").append(row);
+                        });
+                    },
+                    error: function() {
+                        $("#adminReviewList").html('<tr><td colspan="6" class="text-center text-danger">Yorumlar çekilirken bir hata oluştu!</td></tr>');
+                    }
+                });
+            }
+
+            LoadAllReviews();
+
+            // YORUMU KÖKTEN SİLME İŞLEMİ
+            $(document).on("click", ".btnDeleteReview", function() {
+                var btn = $(this);
+                var reviewId = btn.data("id");
+                
+                if(confirm("Bu yorumu tamamen silmek istediğinize emin misiniz? (Küfür/Hakaret içeriyorsa silin)")) {
+                    btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+                    $.ajax({
+                        url: apiBaseUrl + "/Review/AdminDeleteReview/" + reviewId,
+                        type: "DELETE",
+                        headers: { "Authorization": "Bearer " + token },
+                        success: function(d) {
+                            if(d.status) {
+                                // Başarılıysa satırı animasyonla kaybet
+                                $("#review-row-" + reviewId).fadeOut(400, function() {
+                                    $(this).remove();
+                                    if($(".btnDeleteReview").length === 0) LoadAllReviews();
+                                });
+                            } else {
+                                alert(d.message);
+                                btn.prop("disabled", false).html('<i class="fas fa-trash"></i> Sil');
+                            }
+                        },
+                        error: function() {
+                            alert("Bağlantı hatası!");
+                            btn.prop("disabled", false).html('<i class="fas fa-trash"></i> Sil');
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

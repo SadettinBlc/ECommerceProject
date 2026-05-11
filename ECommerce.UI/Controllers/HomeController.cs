@@ -156,6 +156,33 @@ namespace uyg.UI.Controllers
             ViewBag.ApiBaseURL = _configuration["ApiBaseURL"];
             return View();
         }
+        // BURAYI MyProfile OLARAK DEĞİŞTİRDİK
+        [Route("Home/MyProfile")]
+        public IActionResult MyProfile()
+        {
+            ViewBag.ApiBaseURL = _configuration["ApiBaseURL"];
+            return View();
+        }
+
+        [Route("Home/MyReviews")]
+        public IActionResult MyReviews()
+        {
+            ViewBag.ApiBaseURL = _configuration["ApiBaseURL"];
+            return View();
+        }
+
+        [Route("Home/AdminReviews")]
+        public IActionResult AdminReviews()
+        {
+            ViewBag.ApiBaseURL = _configuration["ApiBaseURL"];
+            return View();
+        }
+
+        [Route("Home/Contact")]
+        public IActionResult Contact()
+        {
+            return View();
+        }
 
     }
 }

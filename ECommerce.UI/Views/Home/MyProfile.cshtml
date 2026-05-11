@@ -1,0 +1,272 @@
+﻿@{
+    ViewData["Title"] = "My Profile";
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12 border-bottom border-secondary pb-2">
+        <h2 class="font-weight-bold text-light m-0"><i class="fas fa-user-circle text-custom"></i> Account Settings</h2>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-7 mb-4">
+        <div class="card card-custom shadow p-4 h-100">
+            <h5 class="text-light mb-4 border-bottom border-secondary pb-2"><i class="fas fa-id-card text-custom"></i> Personal Information</h5>
+            
+            <div class="text-center mb-4">
+                <div class="position-relative d-inline-block">
+                    <img id="profilePicture" src="/images/profil.jpg" class="rounded-circle shadow" style="width: 140px; height: 140px; object-fit: cover; cursor: pointer; border: 3px solid #d4af37;" title="Click to change profile picture" />
+                    <div class="position-absolute bg-dark text-white rounded-circle d-flex justify-content-center align-items-center border border-secondary" style="width: 35px; height: 35px; bottom: 0; right: 0; pointer-events: none;">
+                        <i class="fas fa-camera"></i>
+                    </div>
+                </div>
+                <input type="file" id="fileProfileImage" class="d-none" accept="image/*" />
+                <div id="uploadResult" class="mt-2 text-sm font-weight-bold" style="display:none;"></div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 form-group">
+                    <label class="text-muted font-weight-bold">Username</label>
+                    <input type="text" id="txtUserName" class="form-control bg-dark text-secondary border-secondary" readonly title="Username cannot be changed.">
+                </div>
+                <div class="col-md-6 form-group">
+                    <label class="text-muted font-weight-bold">Full Name</label>
+                    <input type="text" id="txtFullName" class="form-control bg-dark text-light border-secondary">
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 form-group">
+                    <label class="text-muted font-weight-bold">Email Address</label>
+                    <input type="email" id="txtEmail" class="form-control bg-dark text-light border-secondary">
+                </div>
+                <div class="col-md-6 form-group">
+                    <label class="text-muted font-weight-bold">Phone Number</label>
+                    <input type="text" id="txtPhone" class="form-control bg-dark text-light border-secondary">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="text-muted font-weight-bold">Delivery Address</label>
+                <textarea id="txtAddress" class="form-control bg-dark text-light border-secondary" rows="3"></textarea>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 form-group">
+                    <label class="text-muted font-weight-bold">Age</label>
+                    <input type="number" id="txtAge" class="form-control bg-dark text-light border-secondary">
+                </div>
+                <div class="col-md-6 form-group">
+                    <label class="text-muted font-weight-bold">Gender</label>
+                    <select id="cbGender" class="form-control bg-dark text-light border-secondary">
+                        <option value="Not Specified">Not Specified</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn btn-success btn-lg btn-block font-weight-bold mt-3 shadow" id="btnUpdateProfile">
+                <i class="fas fa-save"></i> Save Changes
+            </button>
+            <div id="profileResult" class="mt-3 text-center font-weight-bold" style="display:none; font-size: 1rem;"></div>
+        </div>
+    </div>
+
+    <div class="col-lg-5 mb-4">
+        <div class="card card-custom shadow p-4 h-100">
+            <h5 class="text-light mb-4 border-bottom border-secondary pb-2"><i class="fas fa-shield-alt text-danger"></i> Security & Password</h5>
+            
+            <div class="form-group mt-3">
+                <label class="text-muted font-weight-bold">Current Password</label>
+                <input type="password" class="form-control bg-dark text-light border-secondary" id="txtCurrentPassword" placeholder="Enter current password...">
+            </div>
+            
+            <div class="form-group mt-4">
+                <label class="text-muted font-weight-bold">New Password</label>
+                <input type="password" class="form-control bg-dark text-light border-secondary" id="txtNewPassword" placeholder="Enter new password...">
+            </div>
+
+            <div class="mt-auto pt-4">
+                <button class="btn btn-danger btn-lg btn-block font-weight-bold shadow" id="btnChangePassword">
+                    <i class="fas fa-key"></i> Update Password
+                </button>
+                <div id="passwordResult" class="mt-3 text-center font-weight-bold" style="display:none; font-size: 1rem;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var apiBaseUrl = "@ViewBag.ApiBaseURL";
+            if (!apiBaseUrl || apiBaseUrl === "") { apiBaseUrl = "https://localhost:7073/api"; }
+            
+            var token = localStorage.getItem("token");
+            if (!token) { window.location.replace("/Login"); return; }
+            
+            var currentUploadedPhotoUrl = "";
+
+            function showNotification(message, isSuccess) {
+                var bgColor = isSuccess ? "bg-success" : "bg-danger";
+                var toastHtml = `<div class="toast-notification ${bgColor} text-white px-4 py-3 rounded shadow-lg" style="position: fixed; bottom: 30px; right: 30px; z-index: 9999; display: none; font-weight: bold;">
+                                    <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}
+                                 </div>`;
+                var $toast = $(toastHtml).appendTo("body");
+                $toast.fadeIn(400).delay(2500).fadeOut(400, function() { $(this).remove(); });
+            }
+
+            // 1. PROFİLİ GETİR
+            function GetProfile() {
+                $.ajax({
+                    url: apiBaseUrl + "/User/GetMyProfile",
+                    type: "GET",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (d) {
+                        var p = d.data || d;
+                        
+                        $("#txtUserName").val(p.userName || p.UserName);
+                        $("#txtEmail").val(p.email || p.Email);
+                        $("#txtFullName").val(p.fullName || p.FullName);
+                        $("#txtPhone").val(p.phoneNumber || p.PhoneNumber);
+                        $("#txtAddress").val(p.address || p.Address);
+                        $("#txtAge").val(p.age || p.Age);
+                        
+                        // Cinsiyeti İngilizce/Türkçe eşleştirmesi
+                        var gender = p.gender || p.Gender;
+                        if(gender === "Erkek") gender = "Male";
+                        if(gender === "Kadın") gender = "Female";
+                        $("#cbGender").val(gender || "Not Specified");
+
+                        var photo = p.photoUrl || p.PhotoUrl;
+                        if(photo) {
+                            if(photo === "profil.jpg") {
+                                $("#profilePicture").attr("src", "/images/profil.jpg");
+                            } else {
+                                var photoLink = apiBaseUrl.replace('/api', '') + "/" + photo.replace(/\\/g, '/');
+                                $("#profilePicture").attr("src", photoLink);
+                            }
+                        }
+                    }
+                });
+            }
+
+            GetProfile();
+
+            // 2. FOTOĞRAF YÜKLEME TETİĞİ
+            $("#profilePicture").click(function(){ $("#fileProfileImage").click(); });
+
+            $("#fileProfileImage").change(function () {
+                var file = $(this).prop('files')[0];
+                if (file) {
+                    var formData = new FormData();
+                    formData.append("File", file);
+                    
+                    $("#uploadResult").show().removeClass().addClass("text-info").html('<i class="fas fa-spinner fa-spin"></i> Uploading image...');
+
+                    $.ajax({
+                        url: apiBaseUrl + "/Upload/UploadImage",
+                        type: "POST",
+                        headers: { "Authorization": "Bearer " + token },
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        success: function (data) {
+                            if(data && data.url) {
+                                currentUploadedPhotoUrl = data.url;
+                                var newPhotoLink = apiBaseUrl.replace('/api', '') + "/" + data.url.replace(/\\/g, '/');
+                                $("#profilePicture").attr("src", newPhotoLink);
+                                $("#uploadResult").show().removeClass().addClass("text-success").html('<i class="fas fa-check"></i> Uploaded! Click "Save Changes".').fadeOut(5000);
+                            }
+                        },
+                        error: function () {
+                            $("#uploadResult").show().removeClass().addClass("text-danger").html('<i class="fas fa-times"></i> Failed to upload image!');
+                        }
+                    });
+                }
+            });
+
+            // 3. PROFİLİ GÜNCELLE
+            $("#btnUpdateProfile").click(function () {
+                var btn = $(this);
+                btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
+
+                var dto = {
+                    fullName: $("#txtFullName").val(),
+                    userName: $("#txtUserName").val(),
+                    email: $("#txtEmail").val(),
+                    phoneNumber: $("#txtPhone").val(),
+                    address: $("#txtAddress").val(),
+                    age: parseInt($("#txtAge").val()) || 0,
+                    gender: $("#cbGender").val(),
+                    photoUrl: currentUploadedPhotoUrl
+                };
+
+                $.ajax({
+                    url: apiBaseUrl + "/User/UpdateProfile",
+                    type: "PUT",
+                    headers: { "Authorization": "Bearer " + token },
+                    data: JSON.stringify(dto),
+                    contentType: "application/json",
+                    success: function (d) {
+                        if(d.status) {
+                            showNotification("Profile updated successfully!", true);
+                            setTimeout(function() {
+                                alert("Your profile has been updated! Please log in again to sync your new credentials.");
+                                localStorage.removeItem("token");
+                                location.href = "/Login";
+                            }, 2000);
+                        } else {
+                            showNotification(d.message || "Update failed!", false);
+                            btn.prop("disabled", false).html('<i class="fas fa-save"></i> Save Changes');
+                        }
+                    },
+                    error: function() {
+                        showNotification("Connection error!", false);
+                        btn.prop("disabled", false).html('<i class="fas fa-save"></i> Save Changes');
+                    }
+                });
+            });
+
+            // 4. ŞİFRE DEĞİŞTİRME
+            $("#btnChangePassword").click(function () {
+                var btn = $(this);
+                var dto = {
+                    currentPassword: $("#txtCurrentPassword").val(),
+                    newPassword: $("#txtNewPassword").val()
+                };
+
+                if(!dto.currentPassword || !dto.newPassword) {
+                    showNotification("Please fill in both password fields!", false);
+                    return;
+                }
+
+                btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i> Updating...');
+
+                $.ajax({
+                    url: apiBaseUrl + "/User/ChangePassword",
+                    type: "POST",
+                    headers: { "Authorization": "Bearer " + token },
+                    data: JSON.stringify(dto),
+                    contentType: "application/json",
+                    success: function (d) {
+                        if(d.status) {
+                            showNotification("Password changed successfully!", true);
+                            $("#txtCurrentPassword, #txtNewPassword").val("");
+                        } else {
+                            showNotification(d.message || "Failed to change password.", false);
+                        }
+                        btn.prop("disabled", false).html('<i class="fas fa-key"></i> Update Password');
+                    },
+                    error: function() {
+                        showNotification("Connection error!", false);
+                        btn.prop("disabled", false).html('<i class="fas fa-key"></i> Update Password');
+                    }
+                });
+            });
+        });
+    </script>
+}

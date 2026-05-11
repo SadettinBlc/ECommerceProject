@@ -1,101 +1,146 @@
 ﻿@{
-    ViewData["Title"] = "Gösterge Paneli";
+    ViewData["Title"] = "Admin Dashboard";
     Layout = "~/Views/Shared/_LayoutAdmin.cshtml";
 }
 
-<div class="d-sm-flex align-items-center justify-content-between mb-4">
-    <h1 class="h3 mb-0 text-gray-800">Gösterge Paneli (Dashboard)</h1>
-</div>
+<div class="container-fluid">
+    <div class="d-sm-flex align-items-center justify-content-between mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Gösterge Paneli (Dashboard)</h1>
+    </div>
 
-<div class="row">
+    <div class="row">
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-success shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Toplam Ciro</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="valRevenue">Yükleniyor...</div>
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Toplam Ciro</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="lblTotalRevenue">Yükleniyor...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-dollar-sign fa-2x text-gray-300"></i>
+                        </div>
                     </div>
-                    <div class="col-auto"><i class="fas fa-dollar-sign fa-2x text-gray-300"></i></div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-primary shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Toplam Sipariş</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="valOrders">Yükleniyor...</div>
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Toplam Sipariş</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="lblTotalOrders">Yükleniyor...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-shopping-cart fa-2x text-gray-300"></i>
+                        </div>
                     </div>
-                    <div class="col-auto"><i class="fas fa-shopping-cart fa-2x text-gray-300"></i></div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-info shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Aktif Ürünler</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="valProducts">Yükleniyor...</div>
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Teslim Edilen Siparişler</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="lblDelivered">Yükleniyor...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-truck-loading fa-2x text-gray-300"></i>
+                        </div>
                     </div>
-                    <div class="col-auto"><i class="fas fa-box fa-2x text-gray-300"></i></div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <div class="col-xl-3 col-md-6 mb-4">
-        <div class="card border-left-warning shadow h-100 py-2">
-            <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Kayıtlı Üyeler</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800" id="valUsers">Yükleniyor...</div>
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">Aktif Ürünler</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="lblActiveProducts">Yükleniyor...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-box-open fa-2x text-gray-300"></i>
+                        </div>
                     </div>
-                    <div class="col-auto"><i class="fas fa-users fa-2x text-gray-300"></i></div>
                 </div>
             </div>
         </div>
-    </div>
 
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-dark shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-dark text-uppercase mb-1">Kayıtlı Üyeler</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="lblTotalUsers">Yükleniyor...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4 col-md-6 mb-4">
+            <div class="card border-left-danger shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-danger text-uppercase mb-1">Ürün Değerlendirmeleri</div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800" id="lblTotalReviews">Yükleniyor...</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-comments fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
 </div>
 
 @section Scripts {
     <script>
         $(document).ready(function () {
             var apiBaseUrl = "@ViewBag.ApiBaseURL";
+            if (!apiBaseUrl || apiBaseUrl === "") { apiBaseUrl = "https://localhost:7073/api"; } // Kendi portuna göre ayarla
+            
             var token = localStorage.getItem("token");
 
-            // AJAX ile Dashboard API'sine istek atıyoruz
-            $.ajax({
-                url: apiBaseUrl + "/Dashboard/GetSummaryStats",
-                type: "GET",
-                headers: { "Authorization": "Bearer " + token },
-                success: function (d) {
-                    // API'den gelen verileri alıyoruz (Büyük/Küçük harf duyarlılığına karşı iki ihtimali de yazdım)
-                    var revenue = d.totalRevenue !== undefined ? d.totalRevenue : d.TotalRevenue;
-                    var orders = d.totalOrders !== undefined ? d.totalOrders : d.TotalOrders;
-                    var products = d.totalProducts !== undefined ? d.totalProducts : d.TotalProducts;
-                    var users = d.totalUsers !== undefined ? d.totalUsers : d.TotalUsers;
-
-                    // Değerleri HTML içindeki kutucuklara yazdırıyoruz
-                    $("#valRevenue").html(revenue + " ₺");
-                    $("#valOrders").html(orders + " Adet");
-                    $("#valProducts").html(products + " Adet");
-                    $("#valUsers").html(users + " Kişi");
-                },
-                error: function () {
-                    // Yetki hatası vs olursa
-                    $("#valRevenue, #valOrders, #valProducts, #valUsers").html("Hata!");
-                }
-            });
+            if(token) {
+                $.ajax({
+                    url: apiBaseUrl + "/Dashboard/GetStats",
+                    type: "GET",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (d) {
+                        // Ciro formatlama (1.250,00 ₺ şeklinde)
+                        var formattedRevenue = d.totalRevenue.toLocaleString('tr-TR', { minimumFractionDigits: 2 });
+                        
+                        $("#lblTotalRevenue").text("₺" + formattedRevenue);
+                        $("#lblTotalOrders").text(d.totalOrders);
+                        $("#lblDelivered").text(d.deliveredOrders);
+                        $("#lblActiveProducts").text(d.activeProducts);
+                        $("#lblTotalUsers").text(d.totalUsers);
+                        $("#lblTotalReviews").text(d.totalReviews);
+                    },
+                    error: function () {
+                        // Eğer API'ye ulaşılamazsa veya yetki yoksa Hata bassın
+                        $("#lblTotalRevenue, #lblTotalOrders, #lblDelivered, #lblActiveProducts, #lblTotalUsers, #lblTotalReviews").text("Hata!");
+                    }
+                });
+            } else {
+                $("#lblTotalRevenue, #lblTotalOrders, #lblDelivered, #lblActiveProducts, #lblTotalUsers, #lblTotalReviews").text("Yetkisiz Giriş!");
+            }
         });
     </script>
 }

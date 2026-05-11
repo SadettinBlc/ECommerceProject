@@ -1,0 +1,115 @@
+﻿@{
+    ViewData["Title"] = "My Reviews";
+    Layout = "~/Views/Shared/_LayoutMain.cshtml";
+}
+
+<div class="row mb-4">
+    <div class="col-12 border-bottom border-secondary pb-2">
+        <h2 class="font-weight-bold text-light m-0"><i class="fas fa-star text-warning"></i> My Reviews</h2>
+    </div>
+</div>
+
+<div class="row" id="reviewsContainer">
+    <div class="col-12 text-center mt-5" id="loadingDiv">
+        <div class="spinner-border text-custom" role="status"></div>
+        <h5 class="mt-3 text-light">Loading your reviews...</h5>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+            var apiBaseUrl = "@ViewBag.ApiBaseURL";
+            var token = localStorage.getItem("token");
+
+            if (!token) { window.location.replace("/Login"); return; }
+
+            function showNotification(message, isSuccess) {
+                var bgColor = isSuccess ? "bg-success" : "bg-danger";
+                var toastHtml = `<div class="toast-notification ${bgColor} text-white px-4 py-3 rounded shadow-lg" style="position: fixed; bottom: 30px; right: 30px; z-index: 9999; display: none; font-weight: bold;">
+                                    <i class="fas ${isSuccess ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}
+                                 </div>`;
+                var $toast = $(toastHtml).appendTo("body");
+                $toast.fadeIn(400).delay(2500).fadeOut(400, function() { $(this).remove(); });
+            }
+
+            function LoadMyReviews() {
+                $.ajax({
+                    url: apiBaseUrl + "/Review/GetMyReviews",
+                    type: "GET",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (reviews) {
+                        $("#reviewsContainer").empty();
+                        
+                        if (!reviews || reviews.length === 0) {
+                            $("#reviewsContainer").html(`
+                                <div class="col-12 text-center mt-5">
+                                    <i class="far fa-comment-dots text-secondary" style="font-size: 5rem; margin-bottom: 20px;"></i>
+                                    <h4 class="text-light mb-3">No Reviews Found</h4>
+                                    <p class="text-muted">You haven't reviewed any products yet.</p>
+                                </div>
+                            `);
+                            return;
+                        }
+
+                        $.each(reviews, function (i, r) {
+                            var date = new Date(r.created).toLocaleDateString();
+                            var stars = "⭐".repeat(r.rating || r.Rating);
+                            var pName = r.productName || r.ProductName;
+                            var pId = r.productId || r.ProductId;
+                            
+                            var reviewHtml = `
+                                <div class="col-12 mb-3 review-card" id="review-${r.id}">
+                                    <div class="card card-custom shadow p-3">
+                                        <div class="d-flex justify-content-between align-items-center border-bottom border-secondary pb-2 mb-2">
+                                            <div>
+                                                <a href="/Home/ProductDetails/${pId}" class="text-custom font-weight-bold h5 text-decoration-none">${pName}</a>
+                                                <span class="ml-3 text-muted small"><i class="far fa-calendar-alt"></i> ${date}</span>
+                                            </div>
+                                            <button class="btn btn-sm btn-outline-danger btnDeleteReview" data-id="${r.id}" title="Delete Review">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                        <div class="mb-2">${stars}</div>
+                                        <p class="text-light mb-0" style="font-size: 1.1rem;">"${r.comment || r.Comment}"</p>
+                                    </div>
+                                </div>
+                            `;
+                            $("#reviewsContainer").append(reviewHtml);
+                        });
+                    }
+                });
+            }
+
+            LoadMyReviews();
+
+            // Yorumu Sil
+            $(document).on("click", ".btnDeleteReview", function() {
+                var btn = $(this);
+                var rId = btn.data("id");
+
+                if(confirm("Are you sure you want to delete this review?")) {
+                    btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i>');
+
+                    $.ajax({
+                        url: apiBaseUrl + "/Review/DeleteReview/" + rId,
+                        type: "DELETE",
+                        headers: { "Authorization": "Bearer " + token },
+                        success: function(d) {
+                            if(d.status) {
+                                showNotification("Review deleted successfully.", true);
+                                $("#review-" + rId).fadeOut(400, function() {
+                                    $(this).remove();
+                                    if($(".review-card").length === 0) { LoadMyReviews(); } // Ekran boşsa Empty State'i çağır
+                                });
+                            } else {
+                                showNotification(d.message, false);
+                                btn.prop("disabled", false).html('<i class="fas fa-trash"></i>');
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+}

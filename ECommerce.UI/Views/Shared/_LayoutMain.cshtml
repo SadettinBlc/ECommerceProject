@@ -44,14 +44,15 @@
                     <li class="nav-item AdminOnly" style="display:none;"><a class="nav-link text-warning font-weight-bold" href="/Home/Index"><i class="fas fa-cogs"></i> Admin Panel</a></li>
 
                     <li class="nav-item dropdown Logined" style="display:none;">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                            <i class="fas fa-user-circle"></i> <span id="navUserName">My Account</span>
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                            <img id="navUserPhoto" class="rounded-circle mr-2 border border-secondary" src="/images/profil.jpg" style="width: 30px; height: 30px; object-fit: cover; display: none;">
+                            <span id="navUserName" class="font-weight-bold">My Account</span>
                         </a>
                         <div class="dropdown-menu dropdown-menu-right bg-dark border-secondary shadow animated--grow-in" aria-labelledby="userDropdown">
-                            <a class="dropdown-item text-light" href="/Home/Profile"><i class="fas fa-id-card fa-sm fa-fw mr-2 text-custom"></i> Profile</a>
+                            <a class="dropdown-item text-light" href="/Home/MyProfile"><i class="fas fa-id-card fa-sm fa-fw mr-2 text-custom"></i> Profile</a>
                             <a class="dropdown-item text-light" href="/Home/MyOrders"><i class="fas fa-box-open fa-sm fa-fw mr-2 text-custom"></i> My Orders</a>
                             <a class="dropdown-item text-light" href="/Home/Favorites"><i class="fas fa-heart text-danger fa-sm fa-fw mr-2"></i> My Favorites</a>
-                            <a class="dropdown-item text-light" href="#"><i class="fas fa-star text-warning fa-sm fa-fw mr-2"></i> My Reviews</a>
+                            <a class="dropdown-item text-light" href="/Home/MyReviews"><i class="fas fa-star text-warning fa-sm fa-fw mr-2"></i> My Reviews</a>
                             <div class="dropdown-divider border-secondary"></div>
                             <a class="dropdown-item text-danger font-weight-bold" href="#" id="btnMainLogout"><i class="fas fa-sign-out-alt fa-sm fa-fw mr-2"></i> Logout</a>
                         </div>
@@ -67,7 +68,8 @@
 
     <footer class="py-4 navbar-custom mt-5">
         <div class="container text-center">
-            <span class="text-muted">Copyright &copy; E-Commerce Hackathon 2026</span>
+            <span class="text-muted">Copyright &copy; E-Commerce Hackathon 2026 | </span>
+            <a href="/Home/Contact" class="text-custom text-decoration-none font-weight-bold">Contact Us</a>
         </div>
     </footer>
 
@@ -118,6 +120,17 @@
                 if (decoded) {
                     var uName = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
                     if(uName) $("#navUserName").text(uName);
+
+                    // YENİ: NAVBAR RESMİNİ API'DEN ÇEK
+                    var userPhoto = decoded["UserPhoto"];
+                    if (userPhoto) {
+                        var apiUrl = "@ViewBag.ApiBaseURL";
+                        if (!apiUrl || apiUrl.trim() === "") apiUrl = "https://localhost:7073/api";
+                        var photoUrl = apiUrl.replace('/api', '') + "/" + userPhoto.replace(/\\/g, '/');
+                        $("#navUserPhoto").attr("src", photoUrl).show();
+                    } else {
+                        $("#navUserPhoto").show();
+                    }
 
                     // Sadece Adminse butonu göster
                     var userRole = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
