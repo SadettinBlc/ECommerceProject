@@ -179,9 +179,9 @@
 
                             var stockBadge = "";
                             if(pStock > 0 && pStock <= 5) {
-                                stockBadge = `<span class="badge badge-danger mb-1 shadow-sm p-2 text-left" style="font-size: 0.75rem;"><i class="fas fa-fire"></i> Tükenmek Üzere (Son ${pStock})</span>`;
+                                stockBadge = `<span class="badge badge-danger mb-1 shadow-sm p-2 text-left" style="font-size: 0.75rem;"><i class="fas fa-fire"></i> Low Stock (Only ${pStock} left)</span>`;
                             } else if (pStock === 0) {
-                                stockBadge = `<span class="badge badge-dark text-light mb-1 shadow-sm p-2 text-left" style="font-size: 0.75rem;"><i class="fas fa-times"></i> Tükendi</span>`;
+                                stockBadge = `<span class="badge badge-dark text-light mb-1 shadow-sm p-2 text-left" style="font-size: 0.75rem;"><i class="fas fa-times"></i> Out of Stock</span>`;
                             }
 
                             var cardHtml = `
@@ -191,7 +191,7 @@
                                             
                                             <div class="position-absolute d-flex flex-column" style="top: 10px; left: 10px; z-index: 10;">
                                                 ${stockBadge}
-                                                <span class="badge badge-warning text-dark shadow-sm p-2 text-left" id="badge-popular-${pId}" style="display:none; font-size: 0.75rem;"><i class="fas fa-star"></i> Popüler Ürün</span>
+                                                <span class="badge badge-warning text-dark shadow-sm p-2 text-left" id="badge-popular-${pId}" style="display:none; font-size: 0.75rem;"><i class="fas fa-star"></i> Popular Product</span>
                                             </div>
 
                                             <img src="${imgPath}" class="card-img-top" style="height: 220px; width: 100%; object-fit: contain; background-color: #1a1a1a; padding: 10px;" alt="${pName}">
@@ -227,7 +227,7 @@
                                     var avg = rData.averageRating || rData.AverageRating || 0;
                                     var count = rData.totalReviews || rData.TotalReviews || 0;
                                     if(count === 0) {
-                                        $(".rating-container-" + pId).html('<span class="text-muted">Değerlendirme yok</span>');
+                                        $(".rating-container-" + pId).html('<span class="text-muted">No reviews</span>');
                                     } else {
                                         var stars = "⭐".repeat(Math.round(avg));
                                         $(".rating-container-" + pId).html('<span class="text-warning">' + stars + '</span> <span class="text-muted">(' + avg + ')</span>');
