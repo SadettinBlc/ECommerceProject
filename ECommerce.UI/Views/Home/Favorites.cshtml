@@ -58,9 +58,12 @@
                         $("#favCount").text(products.length + " Items");
 
                         $.each(products, function (i, p) {
-                            var imgPath = (p.photoUrl || p.PhotoUrl) ?
-                                          (apiBaseUrl.replace('/api', '') + "/" + (p.photoUrl || p.PhotoUrl).replace(/\\/g, '/')) :
-                                          "https://dummyimage.com/400x300/1e1e1e/d4af37&text=No+Image";
+                            var rawPhotos = p.photoUrl || p.PhotoUrl || "";
+                            var firstPhoto = rawPhotos.split(',')[0];
+
+                            var imgPath = firstPhoto ?
+                                (apiBaseUrl.replace('/api', '') + "/" + firstPhoto.replace(/\\/g, '/')) :
+                                "https://dummyimage.com/400x300/1e1e1e/d4af37&text=No+Image";
                             var pName = p.name || p.Name;
                             var pPrice = p.price || p.Price;
                             var pId = p.id || p.Id;

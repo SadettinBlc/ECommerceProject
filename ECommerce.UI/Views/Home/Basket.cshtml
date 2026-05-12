@@ -85,9 +85,12 @@
 
                         $.each(items, function (i, item) {
                             var p = item.product || item.Product;
-                            var imgPath = (p.photoUrl || p.PhotoUrl) ?
-                                          (apiBaseUrl.replace('/api', '') + "/" + (p.photoUrl || p.PhotoUrl).replace(/\\/g, '/')) :
-                                          "https://dummyimage.com/200x200/1e1e1e/d4af37&text=No+Image";
+                            var rawPhotos = p.photoUrl || p.PhotoUrl || "";
+                            var firstPhoto = rawPhotos.split(',')[0];
+
+                            var imgPath = firstPhoto ?
+                                (apiBaseUrl.replace('/api', '') + "/" + firstPhoto.replace(/\\/g, '/')) :
+                                "https://dummyimage.com/200x200/1e1e1e/d4af37&text=No+Image";
                             
                             var pName = p.name || p.Name;
                             var pPrice = p.price || p.Price;
