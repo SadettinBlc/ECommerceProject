@@ -4,6 +4,6 @@
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public bool IsActive { get; set; } // Belki kategoriyi silmek yerine gizlemek isteriz
+        public bool IsActive { get; set; } 
     }
 }

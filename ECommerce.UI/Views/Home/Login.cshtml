@@ -60,7 +60,7 @@
     <script src="~/sbadmin/js/sb-admin-2.min.js"></script>
 
     <script>
-            // Token'ı çözen fonksiyon
+            
             function parseJwt(token) {
                 try {
                     var base64Url = token.split('.')[1];
@@ -76,7 +76,7 @@
                 var apiBaseUrl="@ViewBag.ApiBaseURL";
 
                 if (localStorage.getItem("token")) {
-                    // Önceden giriş yapılmışsa, KİM OLURSA OLSUN MAĞAZAYA GİTSİN
+                    
                     window.location.replace("/Home/MainPage");
                 }
 
@@ -98,7 +98,7 @@
                             if (d.status){
                                 localStorage.setItem("token", d.message);
                             
-                                // GİRİŞ BAŞARILIYSA KİM OLURSA OLSUN MAĞAZAYA GİDER!
+                                
                                 location.href = "/Home/MainPage";
                             
                             } else {

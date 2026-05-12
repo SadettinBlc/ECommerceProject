@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Http; // IFormFile kullanabilmek için bu şart
+﻿using Microsoft.AspNetCore.Http; 
 
 namespace ECommerce.API.DTOs
 {

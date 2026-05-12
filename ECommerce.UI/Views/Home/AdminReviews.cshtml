@@ -37,7 +37,6 @@
         $(document).ready(function () {
             var apiBaseUrl = "@ViewBag.ApiBaseURL";
             if (!apiBaseUrl || apiBaseUrl === "") { apiBaseUrl = "https://localhost:7073/api"; }
-            
             var token = localStorage.getItem("token");
 
             function LoadAllReviews() {
@@ -82,12 +81,11 @@
 
             LoadAllReviews();
 
-            // YORUMU KÖKTEN SİLME İŞLEMİ
             $(document).on("click", ".btnDeleteReview", function() {
                 var btn = $(this);
                 var reviewId = btn.data("id");
                 
-                if(confirm("Bu yorumu tamamen silmek istediğinize emin misiniz? (Küfür/Hakaret içeriyorsa silin)")) {
+                if(confirm("Bu yorumu tamamen silmek istediğinize emin misiniz?")) {
                     btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i>');
 
                     $.ajax({
@@ -96,7 +94,6 @@
                         headers: { "Authorization": "Bearer " + token },
                         success: function(d) {
                             if(d.status) {
-                                // Başarılıysa satırı animasyonla kaybet
                                 $("#review-row-" + reviewId).fadeOut(400, function() {
                                     $(this).remove();
                                     if($(".btnDeleteReview").length === 0) LoadAllReviews();

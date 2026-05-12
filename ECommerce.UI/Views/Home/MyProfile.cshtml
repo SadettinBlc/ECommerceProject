@@ -119,7 +119,7 @@
                 $toast.fadeIn(400).delay(2500).fadeOut(400, function() { $(this).remove(); });
             }
 
-            // 1. PROFİLİ GETİR
+            
             function GetProfile() {
                 $.ajax({
                     url: apiBaseUrl + "/User/GetMyProfile",
@@ -135,7 +135,7 @@
                         $("#txtAddress").val(p.address || p.Address);
                         $("#txtAge").val(p.age || p.Age);
                         
-                        // Cinsiyeti İngilizce/Türkçe eşleştirmesi
+                        
                         var gender = p.gender || p.Gender;
                         if(gender === "Erkek") gender = "Male";
                         if(gender === "Kadın") gender = "Female";
@@ -156,7 +156,7 @@
 
             GetProfile();
 
-            // 2. FOTOĞRAF YÜKLEME TETİĞİ
+            
             $("#profilePicture").click(function(){ $("#fileProfileImage").click(); });
 
             $("#fileProfileImage").change(function () {
@@ -189,7 +189,7 @@
                 }
             });
 
-            // 3. PROFİLİ GÜNCELLE
+            
             $("#btnUpdateProfile").click(function () {
                 var btn = $(this);
                 btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i> Saving...');
@@ -231,7 +231,7 @@
                 });
             });
 
-            // 4. ŞİFRE DEĞİŞTİRME
+            
             $("#btnChangePassword").click(function () {
                 var btn = $(this);
                 var dto = {

@@ -9,7 +9,6 @@
     </div>
 
     <div class="row">
-
         <div class="col-xl-4 col-md-6 mb-4">
             <div class="card border-left-success shadow h-100 py-2">
                 <div class="card-body">
@@ -105,7 +104,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 </div>
 
@@ -113,8 +111,7 @@
     <script>
         $(document).ready(function () {
             var apiBaseUrl = "@ViewBag.ApiBaseURL";
-            if (!apiBaseUrl || apiBaseUrl === "") { apiBaseUrl = "https://localhost:7073/api"; } // Kendi portuna göre ayarla
-            
+            if (!apiBaseUrl || apiBaseUrl === "") { apiBaseUrl = "https://localhost:7073/api"; }
             var token = localStorage.getItem("token");
 
             if(token) {
@@ -123,7 +120,6 @@
                     type: "GET",
                     headers: { "Authorization": "Bearer " + token },
                     success: function (d) {
-                        // Ciro formatlama (1.250,00 ₺ şeklinde)
                         var formattedRevenue = d.totalRevenue.toLocaleString('tr-TR', { minimumFractionDigits: 2 });
                         
                         $("#lblTotalRevenue").text("₺" + formattedRevenue);
@@ -134,7 +130,6 @@
                         $("#lblTotalReviews").text(d.totalReviews);
                     },
                     error: function () {
-                        // Eğer API'ye ulaşılamazsa veya yetki yoksa Hata bassın
                         $("#lblTotalRevenue, #lblTotalOrders, #lblDelivered, #lblActiveProducts, #lblTotalUsers, #lblTotalReviews").text("Hata!");
                     }
                 });

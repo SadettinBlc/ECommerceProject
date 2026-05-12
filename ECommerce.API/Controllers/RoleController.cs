@@ -8,7 +8,7 @@ namespace ECommerce.API.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    [Authorize(Roles = "Admin")] // TAM KORUMA EKLENDİ! Artık sadece Adminler rol dağıtabilir.
+    [Authorize(Roles = "Admin")] 
     public class RoleController : ControllerBase
     {
         private readonly RoleManager<AppRole> _roleManager;
@@ -78,7 +78,7 @@ namespace ECommerce.API.Controllers
             return result;
         }
         
-        // 1. Rolü Tamamen Silme
+        
         [HttpDelete("{roleName}")]
         public async Task<ResultDto> DeleteRole(string roleName)
         {
@@ -104,7 +104,7 @@ namespace ECommerce.API.Controllers
             return result;
         }
 
-        // 2. Kullanıcıdan Rolü Geri Alma
+        
         [HttpPost]
         public async Task<ResultDto> RemoveRoleFromUser(string userName, string roleName)
         {
@@ -116,7 +116,7 @@ namespace ECommerce.API.Controllers
                 return result;
             }
 
-            // Önce kullanıcıda bu rol var mı diye kontrol edelim
+            
             var isInRole = await _userManager.IsInRoleAsync(user, roleName);
             if (!isInRole)
             {
@@ -140,14 +140,14 @@ namespace ECommerce.API.Controllers
 
         }
 
-        // Seçilen kullanıcının sahip olduğu rolleri liste halinde döner
+        
         [HttpGet("{userName}")]
         public async Task<IActionResult> GetUserRoles(string userName)
         {
             var user = await _userManager.FindByNameAsync(userName);
             if (user == null) return NotFound("Kullanıcı bulunamadı.");
 
-            // Identity'nin kendi içindeki GetRolesAsync metodu o kullanıcının rollerini string listesi olarak verir
+            
             var roles = await _userManager.GetRolesAsync(user);
             return Ok(roles);
 

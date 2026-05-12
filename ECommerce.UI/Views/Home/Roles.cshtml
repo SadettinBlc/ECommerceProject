@@ -184,7 +184,7 @@
                     success: function (d) {
                         var cls = d.status ? "alert-success" : "alert-danger";
                         $("#assignResult").show().removeClass().addClass("alert " + cls).html(d.message).fadeOut(4000);
-                        if(d.status) { LoadUserRoles(uName); } // BAŞARILIYSA ROLLERİ GÜNCELLE
+                        if(d.status) { LoadUserRoles(uName); } 
                     }
                 });
             });
@@ -201,7 +201,7 @@
                         success: function (d) {
                             var cls = d.status ? "alert-success" : "alert-danger";
                             $("#assignResult").show().removeClass().addClass("alert " + cls).html(d.message).fadeOut(4000);
-                            if(d.status) { LoadUserRoles(uName); } // BAŞARILIYSA ROLLERİ GÜNCELLE
+                            if(d.status) { LoadUserRoles(uName); } 
                         }
                     });
                 }

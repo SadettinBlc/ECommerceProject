@@ -21,7 +21,7 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpPost]
-        [Authorize] // Yorum yapmak için giriş zorunlu
+        [Authorize] 
         public async Task<ResultDto> Add(int productId, string comment, int rating)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -31,7 +31,7 @@ namespace ECommerce.API.Controllers
                 ProductId = productId,
                 AppUserId = userId,
                 Comment = comment,
-                Rating = rating, // Yıldız puanı doğrudan modelden geliyor
+                Rating = rating, 
                 Created = DateTime.Now,
                 Updated = DateTime.Now,
                 IsActive = true
@@ -46,9 +46,9 @@ namespace ECommerce.API.Controllers
         [HttpGet("{productId}")]
         public IActionResult GetProductReviews(int productId)
         {
-            // 1. Ürüne ait aktif yorumları çek
+            
             var reviews = _reviewRepository.Where(r => r.ProductId == productId && r.IsActive)
-                .Include(r => r.AppUser) // Yorumu yapanın adını göstermek için
+                .Include(r => r.AppUser) 
                 .ToList();
 
             if (reviews.Count == 0)
@@ -56,17 +56,17 @@ namespace ECommerce.API.Controllers
                 return Ok(new { AverageRating = 0, TotalReviews = 0, Reviews = reviews });
             }
 
-            // 2. Matematiksel olarak yıldız ortalamasını hesapla
+            
             double average = reviews.Average(r => r.Rating);
 
-            // İsimsiz obje ile arayüze hem ortalamayı hem de yorum listesini dönüyoruz
+            
             return Ok(new
             {
-                AverageRating = Math.Round(average, 1), // 4.2343 yerine 4.2 döner
+                AverageRating = Math.Round(average, 1), 
                 TotalReviews = reviews.Count,
                 Reviews = reviews.Select(r => new {
                     r.Id,
-                    UserName = r.AppUser?.FullName ?? "İsimsiz Kullanıcı", // Null ihtimaline karşı ufak bir güvenlik önlemi
+                    UserName = r.AppUser?.FullName ?? "İsimsiz Kullanıcı", 
                     r.Comment,
                     r.Rating,
                     r.Created
@@ -115,10 +115,10 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpGet]
-        [Authorize] // Güvenlik için Admin rolü eklenebilir: [Authorize(Roles = "Admin")]
+        [Authorize] 
         public IActionResult GetAllReviewsAdmin()
         {
-            // Tüm yorumları ürünü ve yazan kişiyi içerecek şekilde çekiyoruz
+            
             var reviews = _reviewRepository.Where(r => r.IsActive)
                 .Include(r => r.Product)
                 .Include(r => r.AppUser)

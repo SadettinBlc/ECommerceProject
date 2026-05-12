@@ -94,12 +94,12 @@
         $(document).ready(function () {
             var apiBaseUrl = "@ViewBag.ApiBaseURL";
             var token = localStorage.getItem("token");
-            var rawTotal = 0; // İndirimsiz ham tutarı hafızada tutacağız
+            var rawTotal = 0; 
             var isCouponApplied = false;
 
             if (!token) { window.location.replace("/Login"); return; }
 
-            // 1. SEPET TUTARINI ÇEK VE ÖZETİ DOLDUR
+            
             $.ajax({
                 url: apiBaseUrl + "/Basket/GetMyBasket",
                 type: "GET",
@@ -124,7 +124,7 @@
                 error: function() { $("#emptyCheckoutState").show(); }
             });
 
-            // 2. KUPON UYGULAMA (Görsel olarak SADO10 indirimi)
+            
             $("#btnApplyCoupon").click(function() {
                 var code = $("#txtCoupon").val().trim().toUpperCase();
                 
@@ -142,10 +142,10 @@
                 }
             });
 
-            // Sadece sayı girilmesini sağla (Kart ve CVV için)
+            
             $('#txtCard, #txtCvv').on('input', function() { this.value = this.value.replace(/[^0-9]/g, ''); });
 
-            // 3. SİPARİŞİ OLUŞTUR (API'YE POST)
+            
             $("#btnPlaceOrder").click(function() {
                 var address = $("#txtAddress").val();
                 var name = $("#txtName").val();
@@ -187,10 +187,10 @@
                             $("#orderResult").removeClass().addClass("mt-3 text-center font-weight-bold text-success").text(d.message).show();
                             btn.html('<i class="fas fa-check-circle"></i> Payment Successful');
                             
-                            // Üstteki sepet rozetini sıfırla
+                            
                             if(typeof window.UpdateCartCount === "function") window.UpdateCartCount();
 
-                            // 2 saniye sonra ana sayfaya (veya siparişlerim sayfasına) yönlendir
+                            
                             setTimeout(function() { window.location.replace("/Home/MainPage"); }, 2500);
                         } else {
                             $("#orderResult").removeClass().addClass("mt-3 text-center font-weight-bold text-danger").text(d.message).show();

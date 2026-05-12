@@ -1,178 +1,124 @@
-﻿ProductDetails:
-
-
-
-@{
-
+﻿@{
     ViewData["Title"] = "Product Details";
-
     Layout = "~/Views/Shared/_LayoutMain.cshtml";
-
 }
 
-
-
-<div class="row mt-4">
-
-    <div class="col-md-5 mb-4">
-
-        <div class="card card-custom shadow p-3">
-
-            <img id="imgProduct" src="" class="img-fluid rounded" alt="Product Image" style="object-fit: cover; width: 100%; max-height: 500px;">
-
+<div class="row mt-4 mb-5">
+    <div class="col-lg-5 mb-4 mb-lg-0">
+        <div class="card card-custom shadow p-2" style="background-color: #1a1a1a;">
+            <div id="productCarousel" class="carousel slide" data-ride="carousel">
+                <ol class="carousel-indicators" id="carouselIndicators"></ol>
+                <div class="carousel-inner rounded" id="carouselInner"></div>
+                
+                <a class="carousel-control-prev" href="#productCarousel" role="button" data-slide="prev">
+                    <span class="carousel-control-prev-icon" aria-hidden="true" style="background-color: rgba(0,0,0,0.5); border-radius: 50%; padding: 20px;"></span>
+                    <span class="sr-only">Previous</span>
+                </a>
+                <a class="carousel-control-next" href="#productCarousel" role="button" data-slide="next">
+                    <span class="carousel-control-next-icon" aria-hidden="true" style="background-color: rgba(0,0,0,0.5); border-radius: 50%; padding: 20px;"></span>
+                    <span class="sr-only">Next</span>
+                </a>
+            </div>
         </div>
-
     </div>
 
-
-
-    <div class="col-md-7">
-
-        <h2 id="lblProductName" class="font-weight-bold text-light border-bottom border-secondary pb-3">Loading...</h2>
-
+    <div class="col-lg-7">
+        <h2 class="text-light font-weight-bold mb-2" id="lblProductName">Loading...</h2>
         
-
-        <div class="mb-3">
-
-            <span class="text-warning" id="lblStarRating" style="font-size: 1.2rem;">⭐⭐⭐⭐⭐</span>
-
-            <span class="text-muted ml-2" id="lblTotalReviews">(0 Reviews)</span>
-
+        <div class="d-flex align-items-center mb-3">
+            <div id="productRatingStars" class="mr-2" style="font-size: 1.2rem;"></div>
+            <span class="text-muted" id="lblReviewCount"></span>
         </div>
 
-
-
-        <h3 id="lblProductPrice" class="text-custom font-weight-bold my-3">₺0.00</h3>
-
+        <h3 class="text-custom font-weight-bold mb-4" id="lblProductPrice">₺0.00</h3>
         
+        <p class="text-light mb-4" id="lblProductDesc" style="line-height: 1.6; font-size: 1.1rem;"></p>
 
-        <p id="lblProductDesc" class="text-muted mt-3" style="font-size: 1.1rem; line-height: 1.6;">
-
-        </p>
-
-
-
-        <div id="featuresContainer" class="mt-4" style="display:none;">
-
-            <h5 class="text-light font-weight-bold"><i class="fas fa-list"></i> Specifications</h5>
-
-            <ul class="list-group list-group-flush mt-3 border border-secondary rounded" id="listFeatures">
-            </ul>
-
+        <div class="card card-custom mb-4 p-3 border-secondary">
+            <h6 class="text-custom font-weight-bold mb-3 border-bottom border-secondary pb-2"><i class="fas fa-list-ul"></i> Specifications</h6>
+            <div class="row" id="featureListContainer">
+            </div>
         </div>
 
+        <div class="d-flex align-items-center mb-4">
+            <span class="text-muted mr-3">Status:</span>
+            <span id="lblStockStatus" class="font-weight-bold"></span>
+        </div>
 
-
-        <div class="row mt-5">
-
-            <div class="col-md-6 mb-2">
-
-                <button class="btn btn-primary btn-lg btn-block font-weight-bold shadow" id="btnAddToCart">
-
+        <div class="row">
+            <div class="col-md-6 mb-3 mb-md-0">
+                <button class="btn btn-primary btn-lg btn-block font-weight-bold shadow" id="btnAddToCartDetail">
                     <i class="fas fa-cart-plus"></i> Add to Basket
-
                 </button>
-
             </div>
-
-            <div class="col-md-6 mb-2">
-
-                <button class="btn btn-outline-danger btn-lg btn-block font-weight-bold shadow" id="btnAddFavorite">
-
-                    <i class="far fa-heart"></i> Add to Favorites
-
+            <div class="col-md-6">
+                <button class="btn btn-outline-danger btn-lg btn-block font-weight-bold shadow" id="btnToggleFav">
+                    <i class="far fa-heart" id="favIcon"></i> <span id="favText">Add to Favorites</span>
                 </button>
-
             </div>
-
         </div>
-
+        <div id="actionResult" class="mt-3 text-center font-weight-bold" style="display:none; font-size: 1rem;"></div>
     </div>
-
 </div>
 
-
-
-<div class="row mt-5 pt-4 border-top border-secondary">
-
+<div class="row mb-5">
     <div class="col-12">
-
-        <h3 class="text-light font-weight-bold mb-4"><i class="fas fa-comments text-custom"></i> Customer Reviews</h3>
-
-    </div>
-
-
-
-    <div class="col-md-5 mb-4 Logined" style="display:none;">
-
-        <div class="card card-custom p-4">
-
-            <h5 class="text-light mb-3">Write a Review</h5>
-
-            <div class="form-group">
-
-                <select class="form-control bg-dark text-light border-secondary" id="cbRating">
-
-                    <option value="5">⭐⭐⭐⭐⭐ (5/5) Perfect</option>
-
-                    <option value="4">⭐⭐⭐⭐ (4/5) Good</option>
-
-                    <option value="3">⭐⭐⭐ (3/5) Average</option>
-
-                    <option value="2">⭐⭐ (2/5) Bad</option>
-
-                    <option value="1">⭐ (1/5) Terrible</option>
-
-                </select>
-
+        <div class="card card-custom shadow">
+            <div class="card-header border-bottom border-secondary py-3 d-flex justify-content-between align-items-center" style="background-color: #1e1e1e;">
+                <h5 class="m-0 font-weight-bold text-light"><i class="fas fa-comments text-custom"></i> Customer Reviews</h5>
+                <button class="btn btn-sm btn-outline-warning font-weight-bold" id="btnShowReviewModal">Write a Review</button>
             </div>
-
-            <div class="form-group">
-
-                <textarea class="form-control bg-dark text-light border-secondary" id="txtReviewMessage" rows="3" placeholder="Share your thoughts..."></textarea>
-
+            <div class="card-body p-0">
+                <ul class="list-group list-group-flush" id="reviewsList">
+                </ul>
             </div>
-
-            <button class="btn btn-outline-warning btn-block font-weight-bold" id="btnSubmitReview">Submit Review</button>
-
         </div>
-
     </div>
-
-
-
-    <div class="col-md-5 mb-4 NotLogined">
-
-        <div class="alert alert-secondary bg-dark text-light border-secondary">
-
-            You must <a href="/Home/Login" class="text-custom font-weight-bold">Login</a> to write a review.
-
-        </div>
-
-    </div>
-
-
-
-    <div class="col-md-7">
-
-        <div id="reviewsList">
-
-            <div class="text-center mt-3"><div class="spinner-border text-custom" role="status"></div></div>
-
-        </div>
-
-    </div>
-
 </div>
 
-
+<div class="modal fade" id="reviewModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content bg-dark border-secondary shadow-lg">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-light font-weight-bold"><i class="fas fa-pen text-custom"></i> Write a Review</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group text-center mb-4">
+                    <label class="text-muted font-weight-bold d-block">Your Rating</label>
+                    <div class="rating-select" style="font-size: 2rem; cursor: pointer;">
+                        <i class="far fa-star text-warning star-btn" data-val="1"></i>
+                        <i class="far fa-star text-warning star-btn" data-val="2"></i>
+                        <i class="far fa-star text-warning star-btn" data-val="3"></i>
+                        <i class="far fa-star text-warning star-btn" data-val="4"></i>
+                        <i class="far fa-star text-warning star-btn" data-val="5"></i>
+                    </div>
+                    <input type="hidden" id="txtRatingVal" value="0">
+                </div>
+                <div class="form-group">
+                    <label class="text-muted font-weight-bold">Your Comment</label>
+                    <textarea class="form-control bg-dark text-light border-secondary" id="txtReviewComment" rows="4"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-outline-light" data-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning font-weight-bold" id="btnSubmitReview">Submit Review</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 @section Scripts {
     <script>
         $(document).ready(function () {
             var apiBaseUrl = "@ViewBag.ApiBaseURL";
+            if (!apiBaseUrl || apiBaseUrl === "") { apiBaseUrl = "https://localhost:7073/api"; }
+            
             var token = localStorage.getItem("token");
-            var productId = @ViewBag.ProductId;
+            var pId = window.location.pathname.split('/').pop();
+            var isFavorite = false;
 
             function showNotification(message, isSuccess) {
                 var bgColor = isSuccess ? "bg-success" : "bg-danger";
@@ -183,125 +129,163 @@
                 $toast.fadeIn(400).delay(2500).fadeOut(400, function() { $(this).remove(); });
             }
 
-            $.ajax({
-                url: apiBaseUrl + "/Product/GetById/" + productId,
-                type: "GET",
-                success: function (p) {
-                    var imgPath = (p.photoUrl || p.PhotoUrl) ?
-                                  (apiBaseUrl.replace('/api', '') + "/" + (p.photoUrl || p.PhotoUrl).replace(/\\/g, '/')) :
-                                  "https://dummyimage.com/600x600/1e1e1e/d4af37&text=No+Image";
-                    
-                    $("#imgProduct").attr("src", imgPath);
-                    $("#lblProductName").text(p.name || p.Name);
-                    $("#lblProductPrice").text("₺" + (p.price || p.Price));
-                    $("#lblProductDesc").text(p.description || p.Description || "No description available.");
+            function LoadProductDetails() {
+                $.ajax({
+                    url: apiBaseUrl + "/Product/GetById/" + pId,
+                    type: "GET",
+                    success: function (d) {
+                        $("#lblProductName").text(d.name || d.Name);
+                        $("#lblProductPrice").text("₺" + (d.price || d.Price));
+                        $("#lblProductDesc").text(d.description || d.Description);
 
-                    var features = p.productFeatures || p.ProductFeatures;
-                    if (features && features.length > 0) {
-                        $("#featuresContainer").show();
-                        $.each(features, function(i, f) {
-                            $("#listFeatures").append(`
-                                <li class="list-group-item bg-dark text-light border-secondary px-3 py-2">
-                                    <strong class="text-custom">${f.name || f.Name}:</strong> ${f.value || f.Value}
-                                </li>
-                            `);
+                        var stock = d.stock || d.Stock;
+                        if (stock > 3) {
+                            $("#lblStockStatus").html('<span class="text-success"><i class="fas fa-check-circle"></i> In Stock</span>');
+                        } else if (stock > 0) {
+                            $("#lblStockStatus").html('<span class="text-warning"><i class="fas fa-fire"></i> Hurry, only ' + stock + ' left!</span>');
+                        } else {
+                            $("#lblStockStatus").html('<span class="text-danger"><i class="fas fa-times-circle"></i> Out of Stock</span>');
+                            $("#btnAddToCartDetail").prop("disabled", true);
+                        }
+
+                        
+                        var rawPhotos = d.photoUrl || d.PhotoUrl || "";
+                        var photoArray = [];
+
+                        if(rawPhotos === "") {
+                            photoArray.push("https://dummyimage.com/600x600/1e1e1e/d4af37&text=No+Image");
+                        } else {
+                            photoArray = rawPhotos.split(',').filter(x => x.trim() !== "");
+                        }
+
+                        $("#carouselIndicators").empty();
+                        $("#carouselInner").empty();
+
+                        $.each(photoArray, function(index, photoPath) {
+                            var finalImgUrl = photoPath.includes("http") ? photoPath : apiBaseUrl.replace('/api', '') + "/" + photoPath.replace(/\\/g, '/');
+                            var activeClass = index === 0 ? "active" : "";
+                            
+                            $("#carouselIndicators").append('<li data-target="#productCarousel" data-slide-to="' + index + '" class="' + activeClass + '"></li>');
+                            
+                        $("#carouselInner").append(`
+                            <div class="carousel-item ${activeClass}">
+                                <img src="${finalImgUrl}" class="d-block mx-auto rounded" style="height: 500px; max-width: 100%; object-fit: contain; background-color: #0f0f0f;">
+                            </div>
+                        `);
                         });
+
+                       
+                        if(photoArray.length <= 1) {
+                            $(".carousel-control-prev, .carousel-control-next, .carousel-indicators").hide();
+                        } else {
+                            $(".carousel-control-prev, .carousel-control-next, .carousel-indicators").show();
+                        }
+
+                        var features = d.productFeatures || d.ProductFeatures || [];
+                        $("#featureListContainer").empty();
+                        if(features.length > 0) {
+                            $.each(features, function(i, f) {
+                                $("#featureListContainer").append(`
+                                    <div class="col-sm-6 mb-2">
+                                        <div class="d-flex justify-content-between border-bottom border-secondary pb-1">
+                                            <span class="text-muted">${f.name || f.FeatureName}</span>
+                                            <span class="text-light font-weight-bold">${f.value || f.FeatureValue}</span>
+                                        </div>
+                                    </div>
+                                `);
+                            });
+                        } else {
+                            $("#featureListContainer").html('<div class="col-12 text-muted">No specifications available.</div>');
+                        }
                     }
-                }
-            });
+                });
+            }
+
+            function CheckFavoriteStatus() {
+                if(!token) return;
+                $.ajax({
+                    url: apiBaseUrl + "/Favorite/GetMyFavorites",
+                    type: "GET",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (d) {
+                        var favs = d || [];
+                        var isFav = false;
+                        $.each(favs, function(i, f) {
+                            if((f.id || f.Id) == pId) isFav = true;
+                        });
+
+                        isFavorite = isFav;
+                        if(isFav) {
+                            $("#btnToggleFav").removeClass("btn-outline-danger").addClass("btn-danger");
+                            $("#favIcon").removeClass("far").addClass("fas");
+                            $("#favText").text("Remove Favorite");
+                        }
+                    }
+                });
+            }
 
             function LoadReviews() {
                 $.ajax({
-                    url: apiBaseUrl + "/Review/GetProductReviews/" + productId,
+                    url: apiBaseUrl + "/Review/GetProductReviews/" + pId,
                     type: "GET",
                     success: function (d) {
+                        var reviews = d.reviews || d.Reviews || [];
+                        var avg = d.averageRating || d.AverageRating || 0;
+                        var count = d.totalReviews || d.TotalReviews || 0;
+
                         $("#reviewsList").empty();
                         
-                        var avg = d.averageRating || d.AverageRating || 0;
-                        var total = d.totalReviews || d.TotalReviews || 0;
-                        
-                        $("#lblTotalReviews").text("(" + total + " Reviews)");
-                        
-                        var starString = "⭐".repeat(Math.round(avg)) + '<span style="font-size:0.9rem; color:#bbb;"> ('+avg+'/5)</span>';
-                        if(total === 0) starString = "Not Rated Yet";
-                        $("#lblStarRating").html(starString);
-
-                        var revList = d.reviews || d.Reviews || [];
-                        if (revList.length === 0) {
-                            $("#reviewsList").html('<div class="alert alert-secondary bg-dark text-light border-secondary">No reviews yet. Be the first to review!</div>');
+                        if(count === 0) {
+                            $("#productRatingStars").html('<span class="text-muted" style="font-size:0.9rem;">No ratings</span>');
+                            $("#lblReviewCount").text("");
+                            $("#reviewsList").html('<li class="list-group-item bg-dark text-muted text-center border-secondary py-4">Be the first to review this product!</li>');
                             return;
                         }
 
-                        $.each(revList, function (i, r) {
-                            var stars = "⭐".repeat(r.rating || r.Rating || 5);
-                            var userName = r.userName || r.UserName;
-                            var msg = r.comment || r.Comment;
+                        var avgStars = "⭐".repeat(Math.round(avg));
+                        $("#productRatingStars").html(avgStars);
+                        $("#lblReviewCount").text("(" + count + " Reviews)");
+
+                        $.each(reviews, function(i, r) {
+                            var date = new Date(r.created).toLocaleDateString();
+                            var stars = "⭐".repeat(r.rating || r.Rating);
+                            var uName = r.userName || r.UserName || "User";
                             
-                            var reviewHtml = `
-                                <div class="card card-custom mb-3">
-                                    <div class="card-body py-3">
-                                        <div class="d-flex justify-content-between align-items-center mb-2">
-                                            <strong class="text-custom"><i class="fas fa-user-circle"></i> ${userName}</strong>
-                                            <span>${stars}</span>
-                                        </div>
-                                        <p class="mb-0 text-light">${msg}</p>
+                            var html = `
+                                <li class="list-group-item bg-dark border-secondary px-4 py-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <strong class="text-light"><i class="fas fa-user-circle text-secondary"></i> ${uName}</strong>
+                                        <small class="text-muted">${date}</small>
                                     </div>
-                                </div>
+                                    <div class="mb-2">${stars}</div>
+                                    <p class="text-light mb-0">${r.comment || r.Comment}</p>
+                                </li>
                             `;
-                            $("#reviewsList").append(reviewHtml);
+                            $("#reviewsList").append(html);
                         });
                     }
                 });
             }
+
+            LoadProductDetails();
+            CheckFavoriteStatus();
             LoadReviews();
 
-            $("#btnSubmitReview").click(function () {
-                var message = $("#txtReviewMessage").val();
-                var rating = parseInt($("#cbRating").val());
-
-                if(!message) {
-                    showNotification("Please enter a message!", false);
-                    return;
-                }
-
-                var requestUrl = apiBaseUrl + "/Review/Add?productId=" + productId + "&comment=" + encodeURIComponent(message) + "&rating=" + rating;
-
-                $.ajax({
-                    url: requestUrl,
-                    type: "POST",
-                    headers: { "Authorization": "Bearer " + token },
-                    success: function (d) {
-                        if(d.status) {
-                            $("#txtReviewMessage").val("");
-                            showNotification(d.message, true);
-                            LoadReviews();
-                        } else {
-                            showNotification(d.message, false);
-                        }
-                    }
-                });
-            });
-
-            // YENİ: TEMİZLENMİŞ SEPETE EKLEME İŞLEMİ (SAYAÇ GÜNCELLEMESİYLE)
-            $("#btnAddToCart").click(function() {
-                if(!token) { showNotification("You must be logged in to add items to your basket.", false); return; }
-                
+            $("#btnAddToCartDetail").click(function () {
+                if(!token) { showNotification("Please login to add to basket.", false); return; }
                 var btn = $(this);
                 btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i> Adding...');
 
-                var requestUrl = apiBaseUrl + "/Basket/AddItem?productId=" + productId + "&quantity=1";
-
                 $.ajax({
-                    url: requestUrl,
+                    url: apiBaseUrl + "/Basket/AddItem?productId=" + pId + "&quantity=1",
                     type: "POST",
                     headers: { "Authorization": "Bearer " + token },
                     success: function(d) {
                         if(d.status) {
-                            showNotification("Item added to basket!", true);
+                            showNotification("Added to your basket!", true);
                             if(typeof window.UpdateCartCount === "function") window.UpdateCartCount();
-                            
                             btn.removeClass("btn-primary").addClass("btn-success").html('<i class="fas fa-check"></i> Added');
-                            setTimeout(function() {
+                            setTimeout(function(){
                                 btn.removeClass("btn-success").addClass("btn-primary").html('<i class="fas fa-cart-plus"></i> Add to Basket');
                                 btn.prop("disabled", false);
                             }, 2000);
@@ -309,73 +293,43 @@
                             showNotification(d.message, false);
                             btn.prop("disabled", false).html('<i class="fas fa-cart-plus"></i> Add to Basket');
                         }
-                    },
-                    error: function() {
-                        showNotification("Connection Error!", false);
-                        btn.prop("disabled", false).html('<i class="fas fa-cart-plus"></i> Add to Basket');
                     }
                 });
             });
 
-            var isProductFavorite = false;
-
-            if(token) {
-                $.ajax({
-                    url: apiBaseUrl + "/Favorite/GetMyFavorites",
-                    type: "GET",
-                    headers: { "Authorization": "Bearer " + token },
-                    success: function (d) {
-                        if (d && d.length > 0) {
-                            var favIds = d.map(p => p.id || p.Id);
-                            if (favIds.includes(productId)) {
-                                isProductFavorite = true;
-                                $("#btnAddFavorite").removeClass("btn-outline-danger").addClass("btn-danger")
-                                                    .html('<i class="fas fa-heart"></i> Remove from Favorites');
-                            }
-                        }
-                    }
-                });
-            }
-
-            $("#btnAddFavorite").click(function() {
-                if(!token) {
-                    showNotification("You must be logged in!", false);
-                    return;
-                }
-                
+            $("#btnToggleFav").click(function () {
+                if(!token) { showNotification("Please login to manage favorites.", false); return; }
                 var btn = $(this);
-                btn.prop("disabled", true).html('<i class="fas fa-spinner fa-spin"></i> Processing...');
+                btn.prop("disabled", true);
 
-                if (isProductFavorite) {
+                if (isFavorite) {
                     $.ajax({
-                        url: apiBaseUrl + "/Favorite/Remove/" + productId,
+                        url: apiBaseUrl + "/Favorite/Remove/" + pId,
                         type: "DELETE",
                         headers: { "Authorization": "Bearer " + token },
                         success: function(d) {
                             if(d.status) {
-                                isProductFavorite = false;
-                                btn.removeClass("btn-danger").addClass("btn-outline-danger").html('<i class="far fa-heart"></i> Add to Favorites');
+                                isFavorite = false;
+                                btn.removeClass("btn-danger").addClass("btn-outline-danger");
+                                $("#favIcon").removeClass("fas").addClass("far");
+                                $("#favText").text("Add to Favorites");
                                 showNotification("Removed from favorites.", true);
-                            } else {
-                                btn.html('<i class="fas fa-heart"></i> Remove from Favorites');
-                                showNotification(d.message, false);
                             }
                             btn.prop("disabled", false);
                         }
                     });
                 } else {
                     $.ajax({
-                        url: apiBaseUrl + "/Favorite/Add?productId=" + productId,
+                        url: apiBaseUrl + "/Favorite/Add?productId=" + pId,
                         type: "POST",
                         headers: { "Authorization": "Bearer " + token },
                         success: function(d) {
                             if(d.status) {
-                                isProductFavorite = true;
-                                btn.removeClass("btn-outline-danger").addClass("btn-danger").html('<i class="fas fa-heart"></i> Remove from Favorites');
+                                isFavorite = true;
+                                btn.removeClass("btn-outline-danger").addClass("btn-danger");
+                                $("#favIcon").removeClass("far").addClass("fas");
+                                $("#favText").text("Remove Favorite");
                                 showNotification("Added to favorites!", true);
-                            } else {
-                                btn.html('<i class="far fa-heart"></i> Add to Favorites');
-                                showNotification(d.message, false);
                             }
                             btn.prop("disabled", false);
                         }
@@ -383,6 +337,56 @@
                 }
             });
 
+            $("#btnShowReviewModal").click(function () {
+                if(!token) { showNotification("Please login to write a review.", false); return; }
+                $("#txtRatingVal").val("0");
+                $(".star-btn").removeClass("fas").addClass("far");
+                $("#txtReviewComment").val("");
+                $("#reviewModal").modal("show");
+            });
+
+            $(".star-btn").click(function () {
+                var val = $(this).data("val");
+                $("#txtRatingVal").val(val);
+                $(".star-btn").each(function () {
+                    if ($(this).data("val") <= val) {
+                        $(this).removeClass("far").addClass("fas");
+                    } else {
+                        $(this).removeClass("fas").addClass("far");
+                    }
+                });
+            });
+
+            $("#btnSubmitReview").click(function () {
+                var rating = parseInt($("#txtRatingVal").val());
+                var comment = $("#txtReviewComment").val();
+
+                if(rating === 0) { showNotification("Please select a star rating.", false); return; }
+                if(!comment) { showNotification("Please write a comment.", false); return; }
+
+                var btn = $(this);
+                btn.prop("disabled", true).text("Submitting...");
+                
+                $.ajax({
+                    url: apiBaseUrl + "/Review/Add?productId=" + pId + "&rating=" + rating + "&comment=" + encodeURIComponent(comment),
+                    type: "POST",
+                    headers: { "Authorization": "Bearer " + token },
+                    success: function (d) {
+                        if(d.status) {
+                            showNotification("Review submitted successfully!", true);
+                            $("#reviewModal").modal("hide");
+                            LoadReviews();
+                        } else {
+                            showNotification(d.message, false);
+                        }
+                        btn.prop("disabled", false).text("Submit Review");
+                    },
+                    error: function() {
+                        showNotification("Bağlantı hatası! Yorum gönderilemedi.", false);
+                        btn.prop("disabled", false).text("Submit Review");
+                    }
+                });
+            });
         });
     </script>
 }

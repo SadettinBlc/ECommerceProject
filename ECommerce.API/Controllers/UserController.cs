@@ -28,10 +28,10 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpPost]
-        [AllowAnonymous] // Herkes kayıt olabilir
+        [AllowAnonymous] 
         public async Task<ResultDto> Add(RegisterDto dto)
         {
-            // Kullanıcı oluşturulurken PhotoUrl null kalmasın diye varsayılan bir değer atıyoruz
+            
             var identityResult = await _userManager.CreateAsync(new AppUser
             {
                 UserName = dto.UserName,
@@ -40,8 +40,8 @@ namespace ECommerce.API.Controllers
                 PhoneNumber = dto.PhoneNumber,
                 PhotoUrl = "profil.jpg",
                 Address = "Belirtilmedi",
-                Age = 0, // Varsayılan yaş
-                Gender = "Belirtilmedi" // Varsayılan cinsiyet
+                Age = 0, 
+                Gender = "Belirtilmedi" 
             }, dto.Password);
 
             if (!identityResult.Succeeded)
@@ -69,7 +69,7 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpPost]
-        [AllowAnonymous] // Herkes giriş yapmayı deneyebilir
+        [AllowAnonymous] 
         public async Task<ResultDto> SignIn(LoginDto dto)
         {
             var user = await _userManager.FindByNameAsync(dto.UserName);
@@ -113,7 +113,7 @@ namespace ECommerce.API.Controllers
 
         private string GenerateJWT(List<Claim> claims)
         {
-            // appsettings'ten veri çekme yolu düzeltildi (Jwt içinden alınıyor)
+            
             var accessTokenExpiration = DateTime.Now.AddMinutes(Convert.ToDouble(_configuration["Jwt:AccessTokenExpiration"]));
             var authSecret = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
 
@@ -132,7 +132,7 @@ namespace ECommerce.API.Controllers
         [HttpGet]
         public IActionResult List()
         {
-            // Şifreler gelmez, sadece genel kullanıcı bilgileri döner
+            
             var users = _userManager.Users.Select(u => new {
                 u.Id,
                 u.FullName,
@@ -162,10 +162,10 @@ namespace ECommerce.API.Controllers
                 return result;
             }
 
-            // ALANLARI AYRI AYRI GÜNCELLİYORUZ
+            
             user.FullName = dto.FullName;
-            user.UserName = dto.UserName; // Kullanıcı adı artık özgür
-            user.Email = dto.Email;       // E-posta artık özgür
+            user.UserName = dto.UserName; 
+            user.Email = dto.Email;       
             user.PhoneNumber = dto.PhoneNumber;
             user.Address = dto.Address;
             user.Age = dto.Age;
@@ -201,7 +201,7 @@ namespace ECommerce.API.Controllers
                 return NotFound("Kullanıcı bulunamadı.");
             }
 
-            // Sadece arayüzde formları doldurmak için gereken güvenli bilgileri dönüyoruz (Şifre vs. asla dönmez)
+            
             return Ok(new
             {
                 user.FullName,

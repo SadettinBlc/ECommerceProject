@@ -1,11 +1,7 @@
 ﻿@{
-
     ViewData["Title"] = "Main Page";
-
     Layout = "~/Views/Shared/_LayoutMain.cshtml";
-
 }
-
 
 <div class="row mb-4 mt-2">
     <div class="col-12 border-bottom border-secondary pb-3">
@@ -18,88 +14,45 @@
     </div>
 </div>
 
-
-
 <div class="card card-custom shadow-sm mb-4 p-3">
-
     <div class="row">
-
         <div class="col-md-4 mb-2 mb-md-0">
-
             <div class="input-group">
-
                 <input type="text" id="txtSearch" class="form-control bg-dark text-light border-secondary" placeholder="Search products...">
-
                 <div class="input-group-append">
-
                     <button class="btn btn-outline-warning" type="button" id="btnSearch"><i class="fas fa-search"></i></button>
-
                 </div>
-
             </div>
-
         </div>
-
         <div class="col-md-4 mb-2 mb-md-0">
-
             <select id="cbCategories" class="form-control bg-dark text-light border-secondary">
-
                 <option value="">All Categories</option>
-
             </select>
-
         </div>
-
         <div class="col-md-4">
-
             <select id="cbSortBy" class="form-control bg-dark text-light border-secondary">
-
                 <option value="">Sort By: Newest First</option>
-
                 <option value="price_asc">Price: Low to High</option>
-
                 <option value="price_desc">Price: High to Low</option>
-
                 <option value="name_asc">Name: A to Z</option>
-
                 <option value="name_desc">Name: Z to A</option>
-
             </select>
-
         </div>
-
     </div>
-
     
-
     <div class="row mt-3" id="featureFilters" style="display:none;">
-
         <div class="col-12">
-
             <div class="p-3 border border-secondary rounded bg-dark" id="featureCheckboxes">
             </div>
-
         </div>
-
     </div>
-
 </div>
 
-
-
 <div class="row" id="productContainer">
-
     <div class="col-12 text-center mt-5">
-
         <div class="spinner-border text-custom" role="status"></div>
-
         <h5 class="mt-3">Products are loading...</h5>
-
     </div>
-
-</div>
-
-<div class="row" id="productContainer">
 </div>
 
 <div class="row mt-4 mb-5">
@@ -110,18 +63,16 @@
     </div>
 </div>
 
-
-
 @section Scripts {
     <script>
         $(document).ready(function () {
             var apiBaseUrl = "@ViewBag.ApiBaseURL";
+            if (!apiBaseUrl || apiBaseUrl === "") { apiBaseUrl = "https://localhost:7073/api"; }
             var token = localStorage.getItem("token");
             var myFavoriteIds = [];
             
-            // YENİ: Sayfalama Değişkenleri
             var currentPage = 1;
-            var pageSize = 12; // İstediğin gibi 12 ile sınırlandırdık
+            var pageSize = 12;
 
             function showNotification(message, isSuccess) {
                 var bgColor = isSuccess ? "bg-success" : "bg-danger";
@@ -174,9 +125,7 @@
                 });
             }
 
-            // YENİ: LoadProducts fonksiyonu artık sayfalama mantığıyla çalışıyor
             function LoadProducts(isLoadMore) {
-                // Eğer yeni bir arama yapılıyorsa sayfayı 1'e çek ve ekranı temizle
                 if (!isLoadMore) {
                     currentPage = 1;
                     $("#productContainer").html('<div class="col-12 text-center mt-5"><div class="spinner-border text-custom" role="status"></div><h5 class="mt-3">Loading...</h5></div>');
@@ -190,7 +139,6 @@
                 var sortVal = $("#cbSortBy").val();
                 var checkedFeatures = $(".feature-chk:checked").map(function(){ return $(this).val(); }).get().join(',');
 
-                // Arayüzdeki sabit 20 silindi, dinamik currentPage ve pageSize eklendi
                 var requestUrl = apiBaseUrl + "/Product/List?page=" + currentPage + "&pageSize=" + pageSize;
                 if(searchVal) requestUrl += "&search=" + encodeURIComponent(searchVal);
                 if(catId) requestUrl += "&categoryId=" + catId;
@@ -201,7 +149,7 @@
                     url: requestUrl,
                     type: "GET",
                     success: function (d) {
-                        if (!isLoadMore) { $("#productContainer").empty(); } // İlk yüklemeyse ekranı temizle
+                        if (!isLoadMore) { $("#productContainer").empty(); }
 
                         var products = d.items || d.Items || [];
                         var totalPages = d.totalPages || d.TotalPages || 1;
@@ -213,23 +161,42 @@
                         }
 
                         $.each(products, function (i, p) {
-                            var imgPath = (p.photoUrl || p.PhotoUrl) ?
-                                          (apiBaseUrl.replace('/api', '') + "/" + (p.photoUrl || p.PhotoUrl).replace(/\\/g, '/')) :
-                                          "https://dummyimage.com/400x300/1e1e1e/d4af37&text=No+Image";
+                            var rawPhotos = p.photoUrl || p.PhotoUrl || "";
+                            var firstPhoto = rawPhotos.split(',')[0];
+                            
+                            var imgPath = firstPhoto ?
+                                (apiBaseUrl.replace('/api', '') + "/" + firstPhoto.replace(/\\/g, '/')) :
+                                "https://dummyimage.com/400x300/1e1e1e/d4af37&text=No+Image";
+                                
                             var pName = p.name || p.Name;
                             var pPrice = p.price || p.Price;
                             var pId = p.id || p.Id;
+                            var pStock = p.stock || p.Stock || 0;
 
                             var isFav = myFavoriteIds.includes(pId);
                             var btnFavClass = isFav ? "btn-danger is-fav" : "btn-outline-danger";
                             var iconFavClass = isFav ? "fas fa-heart" : "far fa-heart";
 
+                            var stockBadge = "";
+                            if(pStock > 0 && pStock <= 5) {
+                                stockBadge = `<span class="badge badge-danger mb-1 shadow-sm p-2 text-left" style="font-size: 0.75rem;"><i class="fas fa-fire"></i> Tükenmek Üzere (Son ${pStock})</span>`;
+                            } else if (pStock === 0) {
+                                stockBadge = `<span class="badge badge-dark text-light mb-1 shadow-sm p-2 text-left" style="font-size: 0.75rem;"><i class="fas fa-times"></i> Tükendi</span>`;
+                            }
+
                             var cardHtml = `
                                 <div class="col-xl-3 col-lg-4 col-md-6 mb-4">
                                     <div class="card card-custom h-100 shadow">
                                         <div class="position-relative">
-                                            <img src="${imgPath}" class="card-img-top" style="height: 200px; object-fit: cover;" alt="${pName}">
-                                            <button class="btn btn-sm ${btnFavClass} position-absolute btnAddFav shadow" data-id="${pId}" style="top: 10px; right: 10px; border-radius: 50%; width: 35px; height: 35px; padding: 0;">
+                                            
+                                            <div class="position-absolute d-flex flex-column" style="top: 10px; left: 10px; z-index: 10;">
+                                                ${stockBadge}
+                                                <span class="badge badge-warning text-dark shadow-sm p-2 text-left" id="badge-popular-${pId}" style="display:none; font-size: 0.75rem;"><i class="fas fa-star"></i> Popüler Ürün</span>
+                                            </div>
+
+                                            <img src="${imgPath}" class="card-img-top" style="height: 220px; width: 100%; object-fit: contain; background-color: #1a1a1a; padding: 10px;" alt="${pName}">
+                                            
+                                            <button class="btn btn-sm ${btnFavClass} position-absolute btnAddFav shadow" data-id="${pId}" style="top: 10px; right: 10px; border-radius: 50%; width: 35px; height: 35px; padding: 0; z-index: 10;">
                                                 <i class="${iconFavClass}"></i>
                                             </button>
                                         </div>
@@ -244,7 +211,7 @@
                                                     <a href="/Home/ProductDetails/${pId}" class="btn btn-outline-light btn-sm btn-block"><i class="fas fa-search"></i> Details</a>
                                                 </div>
                                                 <div class="col-6 pl-1">
-                                                    <button class="btn btn-primary btn-sm btn-block btnAddToCartList" data-id="${pId}"><i class="fas fa-cart-plus"></i> Add</button>
+                                                    <button class="btn btn-primary btn-sm btn-block btnAddToCartList" data-id="${pId}" ${pStock === 0 ? "disabled" : ""}><i class="fas fa-cart-plus"></i> Add</button>
                                                 </div>
                                             </div>
                                         </div>
@@ -260,16 +227,19 @@
                                     var avg = rData.averageRating || rData.AverageRating || 0;
                                     var count = rData.totalReviews || rData.TotalReviews || 0;
                                     if(count === 0) {
-                                        $(".rating-container-" + pId).html('<span class="text-muted">Not rated yet</span>');
+                                        $(".rating-container-" + pId).html('<span class="text-muted">Değerlendirme yok</span>');
                                     } else {
                                         var stars = "⭐".repeat(Math.round(avg));
                                         $(".rating-container-" + pId).html('<span class="text-warning">' + stars + '</span> <span class="text-muted">(' + avg + ')</span>');
+                                        
+                                        if(avg >= 4 && count >= 2) {
+                                            $("#badge-popular-" + pId).fadeIn();
+                                        }
                                     }
                                 }
                             });
                         });
 
-                        // YENİ: Eğer mevcut sayfa Toplam Sayfaya ulaştıysa veya eşitse Load More butonunu gizle
                         if (currentPage >= totalPages) {
                             $("#btnLoadMore").hide();
                         } else {
@@ -281,7 +251,6 @@
 
             LoadFavoritesAndProducts();
 
-            // Kategori, Arama veya Sıralama değiştiğinde sayfayı sıfırlayıp baştan yükle (false gönderiyoruz)
             $("#cbCategories").change(function () {
                 var catId = $(this).val();
                 if(!catId) {
@@ -323,13 +292,11 @@
             $("#txtSearch").keypress(function (e) { if (e.which == 13) { LoadProducts(false); return false; } });
             $("#cbSortBy").change(function () { LoadProducts(false); });
 
-            // YENİ: Load More Butonuna Tıklanınca Sayfayı Artır
             $("#btnLoadMore").click(function () {
                 currentPage++;
                 LoadProducts(true);
             });
 
-            // Favori İşlemleri (Değişmedi)
             $(document).on("click", ".btnAddFav", function() {
                 if(!token) { showNotification("You must be logged in to manage favorites.", false); return; }
                 var btn = $(this);
@@ -375,7 +342,6 @@
                 }
             });
 
-            // Sepete Ekleme (Değişmedi)
             $(document).on("click", ".btnAddToCartList", function() {
                 if(!token) { showNotification("You must be logged in to add to basket.", false); return; }
                 var btn = $(this);

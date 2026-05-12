@@ -133,7 +133,7 @@
 
             LoadAllOrders();
 
-            // DURUM GÜNCELLEME (Teslim Edildi seçilirse tablo değiştirir)
+            
             $(document).on("click", ".btnSaveStatus", function() {
                 var btn = $(this);
                 var orderId = btn.data("id");
@@ -156,7 +156,7 @@
                 });
             });
 
-            // SİPARİŞİ KÖKTEN SİLME
+            
             $(document).on("click", ".btnDeleteOrder", function() {
                 var orderId = $(this).data("id");
                 

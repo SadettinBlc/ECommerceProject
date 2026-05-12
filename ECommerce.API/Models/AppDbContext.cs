@@ -21,9 +21,9 @@ namespace ECommerce.API.Models
 
         protected override void OnModelCreating(ModelBuilder builder)
         {
-            base.OnModelCreating(builder); // ASP.NET Identity tabloları için bu satır şart!
+            base.OnModelCreating(builder); 
 
-            // SQL Server'daki çoklu silme (cascade) döngüsünü kırmak için kurallar:
+            
             builder.Entity<Favorite>()
                 .HasOne(f => f.Product)
                 .WithMany()

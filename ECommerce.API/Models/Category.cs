@@ -6,7 +6,7 @@ namespace ECommerce.API.Models
     {
         public string Name { get; set; }
 
-        // Hata buradaydı: ICollection yanına <Product> eklenmeli
+        
         public ICollection<Product> Products { get; set; }
     }
 }

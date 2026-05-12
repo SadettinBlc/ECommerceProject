@@ -10,7 +10,7 @@ namespace ECommerce.API.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    [Authorize] // Sınıf seviyesinde Authorize olduğu için tüm metotlar otomatik korunur
+    [Authorize] 
     public class FavoriteController : ControllerBase
     {
         private readonly IRepository<Favorite> _favoriteRepository;
@@ -26,7 +26,7 @@ namespace ECommerce.API.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // Ürün daha önce favorilere eklenmiş mi kontrolü
+            
             var exist = _favoriteRepository.Where(f => f.AppUserId == userId && f.ProductId == productId).Any();
             if (exist)
             {
@@ -76,10 +76,10 @@ namespace ECommerce.API.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // Kullanıcının favorilerini ve o favorilere ait ürün detaylarını çekiyoruz
+            
             var favorites = _favoriteRepository.Where(f => f.AppUserId == userId && f.IsActive)
                 .Include(f => f.Product)
-                .Select(f => f.Product) // Sadece ürün bilgilerini arayüze yolluyoruz
+                .Select(f => f.Product) 
                 .ToList();
 
             if (favorites.Count == 0)

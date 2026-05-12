@@ -96,7 +96,7 @@
                     success: function (d) {
                         var p = d.data || d;
                         
-                        $("#txtUserName").val(p.userName || p.UserName); // KULLANICI ADI ÇEKİLDİ
+                        $("#txtUserName").val(p.userName || p.UserName); 
                         $("#txtEmail").val(p.email || p.Email);
                         $("#txtFullName").val(p.fullName || p.FullName);
                         $("#txtPhone").val(p.phoneNumber || p.PhoneNumber);
@@ -104,7 +104,7 @@
                         $("#txtAge").val(p.age || p.Age);
                         $("#cbGender").val(p.gender || p.Gender);
 
-                        // Fotoğraf Yolu Çözücü
+                        
                         var photo = p.photoUrl || p.PhotoUrl;
                         if(photo) {
                             if(photo === "profil.jpg") {
@@ -155,7 +155,7 @@
             $("#btnUpdateProfile").click(function () {
                 var dto = {
                     fullName: $("#txtFullName").val(),
-                    userName: $("#txtUserName").val(), // KULLANICI ADI EKLENDİ
+                    userName: $("#txtUserName").val(), 
                     email: $("#txtEmail").val(),
                     phoneNumber: $("#txtPhone").val(),
                     address: $("#txtAddress").val(),

@@ -1,6 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Kayıt Ol";
-    Layout = null; // Giriş/Kayıt sayfalarında Admin paneli menüleri olmaz!
+    Layout = null; 
 }
 
 <!DOCTYPE html>
@@ -73,7 +73,7 @@
             $(document).ready(function () {
                 var apiBaseUrl = "@ViewBag.ApiBaseURL";
 
-                // Zaten giriş yapmış biri kazara buraya gelirse Ana Sayfaya şutla
+                
                 if (localStorage.getItem("token")) {
                     window.location.replace("/Home/Index");
                 }
@@ -87,7 +87,7 @@
                         password: $("#txtPassword").val()
                     };
 
-                    // Boş alan kontrolü
+                    
                     if (!dto.userName || !dto.email || !dto.password || !dto.fullName) {
                         $("#registerResult").show().removeClass().addClass("alert-warning").text("Lütfen zorunlu alanları doldurun!");
                         return;
@@ -103,7 +103,7 @@
                         success: function (d) {
                             if (d.status) {
                                 $("#registerResult").show().removeClass("alert-warning alert-danger").addClass("alert-success").text("Kayıt Başarılı! Giriş sayfasına yönlendiriliyorsunuz...");
-                                // Başarılıysa 2 saniye sonra Login sayfasına at
+                                
                                 setTimeout(function () { window.location.href = "/Login"; }, 2000);
                             } else {
                                 $("#registerResult").show().removeClass("alert-warning alert-success").addClass("alert-danger").text(d.message);

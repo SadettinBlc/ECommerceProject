@@ -37,10 +37,10 @@ namespace ECommerce.API.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // Hata yakalama bloğumuz devrede
+            
             try
             {
-                // 1. ÖDEME KONTROLÜ (Mock Payment)
+                
                 if (string.IsNullOrWhiteSpace(dto.CardNumber) || dto.CardNumber.Length != 16)
                 {
                     result.Status = false;
@@ -48,7 +48,7 @@ namespace ECommerce.API.Controllers
                     return result;
                 }
 
-                // 2. SEPET VE STOK KONTROLÜ
+                
                 var basket = _basketRepository.Where(b => b.AppUserId == userId && b.IsActive)
                     .Include(b => b.BasketItems).ThenInclude(bi => bi.Product).FirstOrDefault();
 
@@ -59,15 +59,15 @@ namespace ECommerce.API.Controllers
                     return result;
                 }
 
-                // 3. TUTAR HESAPLAMA VE KUPON UYGULAMA
+                
                 decimal totalAmount = basket.BasketItems.Sum(x => x.Product.Price * x.Quantity);
 
                 if (!string.IsNullOrWhiteSpace(dto.CouponCode) && dto.CouponCode.Trim().ToUpper() == "SADO10")
                 {
-                    totalAmount *= 0.90m; // %10 İndirim çakıyoruz
+                    totalAmount *= 0.90m; 
                 }
 
-                // 4. SİPARİŞ OLUŞTURMA
+                
                 var newOrder = new Order
                 {
                     AppUserId = userId,
@@ -81,7 +81,7 @@ namespace ECommerce.API.Controllers
 
                 foreach (var item in basket.BasketItems)
                 {
-                    // Stok Kontrolü
+                    
                     if (item.Product.Stock < item.Quantity)
                     {
                         result.Status = false;
@@ -98,14 +98,14 @@ namespace ECommerce.API.Controllers
                         IsActive = true
                     });
 
-                    // Stoktan Düşme
+                    
                     item.Product.Stock -= item.Quantity;
                     await _productRepository.UpdateAsync(item.Product);
                 }
 
                 await _orderRepository.AddAsync(newOrder);
 
-                // Sepeti Kapat
+                
                 basket.IsActive = false;
                 await _basketRepository.UpdateAsync(basket);
 
@@ -115,7 +115,7 @@ namespace ECommerce.API.Controllers
             }
             catch (Exception ex)
             {
-                // Kod bir yerde patlarsa sistem çökmeden buraya düşecek ve bize hatayı söyleyecek
+                
                 result.Status = false;
                 result.Message = "İşlem sırasında bir hata oluştu: " + ex.Message;
                 return result;
@@ -134,13 +134,13 @@ namespace ECommerce.API.Controllers
 
             return Ok(orders);
         }
-        // 1. Tüm Siparişleri Listele (Sadece Admin görebilmeli)
+        
         [HttpGet]
-        //[Authorize(Roles = "Admin")] // Test aşamasında yorum satırı yapabilirsin
+        
         public IActionResult GetAllOrders()
         {
             var orders = _orderRepository.Where(o => o.IsActive)
-                .Include(o => o.AppUser) // Siparişi kimin verdiğini görmek için
+                .Include(o => o.AppUser) 
                 .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
                 .OrderByDescending(o => o.Created)
@@ -149,7 +149,7 @@ namespace ECommerce.API.Controllers
             return Ok(orders);
         }
 
-        // 2. Sipariş Durumunu Güncelle (Hazırlanıyor -> Kargoya Verildi vb.)
+        
         [HttpPost]
         public async Task<ResultDto> UpdateOrderStatus(int orderId, string newStatus)
         {
@@ -187,7 +187,7 @@ namespace ECommerce.API.Controllers
                 return result;
             }
 
-            // Sadece henüz kargolanmamış siparişler iptal edilebilir
+            
             if (order.OrderStatus != "Hazırlanıyor" && order.OrderStatus != "Sipariş Alındı")
             {
                 result.Status = false;
@@ -195,13 +195,13 @@ namespace ECommerce.API.Controllers
                 return result;
             }
 
-            // 1. Sipariş durumunu güncelle
+            
             order.OrderStatus = "İptal Edildi";
             order.Updated = DateTime.Now;
             order.IsActive = false;
             await _orderRepository.UpdateAsync(order);
 
-            // 2. STOKLARI GERİ İADE ET (Kritik İşlem)
+            
             foreach (var item in order.OrderItems)
             {
                 item.Product.Stock += item.Quantity;
@@ -219,7 +219,7 @@ namespace ECommerce.API.Controllers
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // Kullanıcının sadece KENDİ siparişinin detayını görebilmesi için güvenlik kontrolü (userId)
+            
             var order = _orderRepository.Where(o => o.Id == orderId && o.AppUserId == userId)
                 .Include(o => o.OrderItems)
                 .ThenInclude(oi => oi.Product)
@@ -234,7 +234,7 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpDelete("{orderId}")]
-        [Authorize] // Sadece giriş yapmış yetkili silebilir
+        [Authorize] 
         public async Task<ResultDto> DeleteOrder(int orderId)
         {
             var order = await _orderRepository.GetByIdAsync(orderId);

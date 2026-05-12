@@ -6,7 +6,7 @@ namespace ECommerce.API.Models
     {
         public string FullName { get; set; }
         public string PhotoUrl { get; set; }
-        public string Address { get; set; } // Siparişler için gerekli
+        public string Address { get; set; } 
         public int Age { get; set; }
         public string Gender { get; set; }
     }

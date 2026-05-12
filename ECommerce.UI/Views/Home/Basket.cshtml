@@ -137,7 +137,7 @@
                         $("#emptyBasketState").hide();
                         $("#basketContent").fadeIn();
                         
-                        // Rozeti güncelle
+                        
                         if(typeof window.UpdateCartCount === "function") window.UpdateCartCount();
                     },
                     error: function(xhr) {
@@ -155,7 +155,7 @@
 
             LoadBasket();
 
-            // --- YENİ: MİKTAR ARTIRMA (+) ---
+            
             $(document).on("click", ".btnIncreaseQty", function() {
                 var btn = $(this);
                 var pId = btn.data("productid");
@@ -172,7 +172,7 @@
                 });
             });
 
-            // --- YENİ: MİKTAR AZALTMA (-) ---
+            
             $(document).on("click", ".btnDecreaseQty", function() {
                 var btn = $(this);
                 var pId = btn.data("productid");
@@ -181,7 +181,7 @@
                 btn.prop("disabled", true);
 
                 if (currentQty > 1) {
-                    // Miktar 1'den büyükse, API'ye -1 göndererek veritabanından eksiltiyoruz
+                    
                     $.ajax({
                         url: apiBaseUrl + "/Basket/AddItem?productId=" + pId + "&quantity=-1",
                         type: "POST",
@@ -189,7 +189,7 @@
                         success: function(d) { LoadBasket(); }
                     });
                 } else {
-                    // Miktar 1 ise, tekrar eksiye bastığında ürünü sepetten tamamen uçur
+                    
                     $.ajax({
                         url: apiBaseUrl + "/Basket/RemoveItem/" + itemId,
                         type: "DELETE",
@@ -202,7 +202,7 @@
                 }
             });
 
-            // --- KÖKTEN SİLME (ÇÖP KUTUSU) ---
+            
             $(document).on("click", ".btnRemoveItem", function() {
                 var btn = $(this);
                 var itemId = btn.data("itemid");

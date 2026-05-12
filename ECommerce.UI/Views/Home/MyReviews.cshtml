@@ -83,7 +83,7 @@
 
             LoadMyReviews();
 
-            // Yorumu Sil
+            
             $(document).on("click", ".btnDeleteReview", function() {
                 var btn = $(this);
                 var rId = btn.data("id");
@@ -100,7 +100,7 @@
                                 showNotification("Review deleted successfully.", true);
                                 $("#review-" + rId).fadeOut(400, function() {
                                     $(this).remove();
-                                    if($(".review-card").length === 0) { LoadMyReviews(); } // Ekran boşsa Empty State'i çağır
+                                    if($(".review-card").length === 0) { LoadMyReviews(); } 
                                 });
                             } else {
                                 showNotification(d.message, false);

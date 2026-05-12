@@ -9,12 +9,12 @@
     <link href="~/sbadmin/css/sb-admin-2.min.css" rel="stylesheet">
     
     <style>
-        /* Mağazaya özel koyu (Dark) ve şık tema ayarları */
+        
         body { background-color: #121212; color: #e0e0e0; }
         .navbar-custom { background-color: #1a1a1a; border-bottom: 1px solid #333; }
         .card-custom { background-color: #1e1e1e; border: 1px solid #333; transition: transform 0.2s; }
         .card-custom:hover { transform: translateY(-5px); border-color: #555; }
-        .text-custom { color: #d4af37; } /* Şık bir gold/sarı tonu */
+        .text-custom { color: #d4af37; } 
     </style>
 </head>
 <body>
@@ -68,7 +68,7 @@
 
     <footer class="py-4 navbar-custom mt-5">
         <div class="container text-center">
-            <span class="text-muted">Copyright &copy; E-Commerce Hackathon 2026 | </span>
+            <span class="text-muted">Copyright &copy; E-Commerce Sado 2026 | </span>
             <a href="/Home/Contact" class="text-custom text-decoration-none font-weight-bold">Contact Us</a>
         </div>
     </footer>
@@ -82,11 +82,11 @@
             catch (e) { return null; }
         }
 
-        // KÜRESEL SEPET SAYACI FONKSİYONU
+        
         window.UpdateCartCount = function() {
             var token = localStorage.getItem("token");
             
-            // Eğer ViewBag ile API URL gelmezse, direkt local portu kullan (Eğer API portun 7073 değilse burayı değiştir!)
+            
             var apiUrl = "@ViewBag.ApiBaseURL";
             if (!apiUrl || apiUrl.trim() === "") {
                 apiUrl = "https://localhost:7073/api"; 
@@ -102,7 +102,7 @@
                     var items = d.basketItems || d.BasketItems || [];
                     var totalCount = 0;
                     $.each(items, function(i, item) { totalCount += (item.quantity || item.Quantity); });
-                    $("#cartCount").text(totalCount); // Rozeti güncelle
+                    $("#cartCount").text(totalCount); 
                 },
                 error: function() { $("#cartCount").text("0"); }
             });
@@ -112,7 +112,7 @@
             var token = localStorage.getItem("token");
             
             if (token) {
-                // Giriş yapılmışsa UI ayarları
+                
                 $(".NotLogined").hide();
                 $(".Logined").show();
                 
@@ -121,7 +121,7 @@
                     var uName = decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
                     if(uName) $("#navUserName").text(uName);
 
-                    // YENİ: NAVBAR RESMİNİ API'DEN ÇEK
+                    
                     var userPhoto = decoded["UserPhoto"];
                     if (userPhoto) {
                         var apiUrl = "@ViewBag.ApiBaseURL";
@@ -132,7 +132,7 @@
                         $("#navUserPhoto").show();
                     }
 
-                    // Sadece Adminse butonu göster
+                    
                     var userRole = decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
                     if (userRole) {
                         var isAdmin = Array.isArray(userRole) ? userRole.includes("Admin") : (userRole === "Admin");
@@ -140,7 +140,7 @@
                     }
                 }
                 
-                // Sayfa ilk yüklendiğinde sepetteki ürün sayısını getir
+                
                 window.UpdateCartCount();
             }
 

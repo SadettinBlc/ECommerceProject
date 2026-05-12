@@ -4,13 +4,13 @@
     {
         public string ShippingAddress { get; set; }
 
-        // Sanal Pos (Mock Payment) Bilgileri
+        
         public string CardHolderName { get; set; }
-        public string CardNumber { get; set; } // 16 hane bekleyeceğiz
-        public string ExpirationDate { get; set; } // Örn: 12/28
-        public string Cvv { get; set; } // 3 hane bekleyeceğiz
+        public string CardNumber { get; set; } 
+        public string ExpirationDate { get; set; } 
+        public string Cvv { get; set; } 
 
-        // Opsiyonel: Patron çıldırdı indirimi için
+        
         public string? CouponCode { get; set; }
     }
 }

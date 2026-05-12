@@ -5,7 +5,7 @@
         public int ProductId { get; set; }
         public Product Product { get; set; }
 
-        public string FeatureName { get; set; } // Filtre Başlığı (Örn: Marka, RAM, Tür)
-        public string FeatureValue { get; set; } // Filtre Değeri (Örn: HP, 16 GB, Soulslike)
+        public string FeatureName { get; set; } 
+        public string FeatureValue { get; set; } 
     }
 }

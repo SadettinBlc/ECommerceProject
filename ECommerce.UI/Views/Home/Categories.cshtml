@@ -1,6 +1,6 @@
 ﻿@{
     ViewData["Title"] = "Categories";
-    Layout = "~/Views/Shared/_LayoutAdmin.cshtml"; // Admin panelinin şablonunu kullan diyoruz!
+    Layout = "~/Views/Shared/_LayoutAdmin.cshtml"; 
 }
 <div class="row">
     <div class="col-md-8" id="divList">
@@ -70,7 +70,7 @@
 
             function FormatDate(d){ return d ? d.split("T")[0] : ""; }
 
-            // 1. LİSTELEME ADRESİ DÜZELTİLDİ (/List eklendi)
+            
             function GetCategoryList(){
                 $.ajax({
                  url: apiBaseUrl + "/Category/List",
@@ -98,7 +98,7 @@
                 $("#tbCategoryList tbody").append(row);
             }
 
-            // 2. EKLEME ADRESİ DÜZELTİLDİ (/Add eklendi)
+            
             $("#btnSave").click(function(){
                if(!$("#txtName").val()){
                    $("#divResult").show().removeClass().addClass("alert alert-danger mt-3").html("Kategori Adı Giriniz!").fadeOut(3000); return false;
@@ -122,10 +122,10 @@
                 });
             });
 
-            // 3. GÜNCELLEME İÇİN VERİ ÇEKME ADRESİ (Eğer GetById apisi yoksa Update apisini kullanırız ama şimdilik listeyi kullanıyoruz)
+            
             $(document).on("click",".btnEdit",function(){
                 var id=$(this).attr("data-id");
-                // Kategoriyi satırdan almak yerine id'sini saklıyoruz
+                
                 $("#btnSave").hide();
                 $("#btnCancel, #btnEdit, #btnDelete").show();
                 $("#txtId").val(id);
@@ -140,7 +140,7 @@
                  $("#cbIsActive").prop("checked",false);
             });
 
-            // 4. GÜNCELLEME ADRESİ DÜZELTİLDİ (/Update eklendi)
+            
             $("#btnEdit").click(function(){
                 var category= { id: $("#txtId").val(), name: $("#txtName").val(), IsActive: $("#cbIsActive").is(":checked") };
                 $.ajax({
@@ -158,7 +158,7 @@
                 });
             });
 
-            // 5. SİLME ADRESİ DÜZELTİLDİ (/Delete eklendi)
+            
             $("#btnDelete").click(function(){
                   var id=$("#txtId").val();
                   $.ajax({

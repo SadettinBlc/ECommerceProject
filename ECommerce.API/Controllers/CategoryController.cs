@@ -45,7 +45,7 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpPost]
-        [Authorize(Roles = "Admin")] // KİLİT EKLENDİ
+        [Authorize(Roles = "Admin")] 
         public async Task<ResultDto> Add(CategoryAddDto dto)
         {
             var newCategory = new Category
@@ -64,7 +64,7 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpPut]
-        [Authorize(Roles = "Admin")] // KİLİT EKLENDİ
+        [Authorize(Roles = "Admin")] 
         public async Task<ResultDto> Update(CategoryUpdateDto dto)
         {
             var category = _categoryRepository.Where(c => c.Id == dto.Id).FirstOrDefault();
@@ -87,7 +87,7 @@ namespace ECommerce.API.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")] // KİLİT EKLENDİ
+        [Authorize(Roles = "Admin")] 
         public async Task<ResultDto> Delete(int id)
         {
             await _categoryRepository.DeleteAsync(id);

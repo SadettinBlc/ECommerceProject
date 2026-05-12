@@ -10,7 +10,7 @@ namespace ECommerce.API.Controllers
 {
     [Route("api/[controller]/[action]")]
     [ApiController]
-    [Authorize] // Sepet işlemleri için üye girişi zorunludur
+    [Authorize] 
     public class BasketController : ControllerBase
     {
         private readonly IRepository<Basket> _basketRepository;
@@ -28,10 +28,10 @@ namespace ECommerce.API.Controllers
         [HttpGet]
         public IActionResult GetMyBasket()
         {
-            // Sisteme giriş yapmış kullanıcının ID'sini yakalıyoruz
+            
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
 
-            // Kullanıcının sepetini, sepetteki ürünleri (BasketItems) ve o ürünlerin detaylarını (Product) Include ile tek seferde çekiyoruz
+            
             var basket = _basketRepository.Where(b => b.AppUserId == userId && b.IsActive)
                 .Include(b => b.BasketItems)
                 .ThenInclude(bi => bi.Product)
@@ -51,7 +51,7 @@ namespace ECommerce.API.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var product = await _productRepository.GetByIdAsync(productId);
 
-            // 1. Ürün ve Stok Kontrolü
+            
             if (product == null)
             {
                 result.Status = false;
@@ -66,7 +66,7 @@ namespace ECommerce.API.Controllers
                 return result;
             }
 
-            // 2. Kullanıcının aktif bir sepeti var mı kontrol et, yoksa anında oluştur
+           
             var basket = _basketRepository.Where(b => b.AppUserId == userId && b.IsActive).FirstOrDefault();
             if (basket == null)
             {
@@ -78,22 +78,22 @@ namespace ECommerce.API.Controllers
                     IsActive = true
                 };
                 await _basketRepository.AddAsync(basket);
-                // Repository içindeki SaveChangesAsync çalıştığı için sepetin Id'si anında oluştu
+                
             }
 
-            // 3. Eklenmek istenen ürün zaten sepette var mı kontrol et
+            
             var basketItem = _basketItemRepository.Where(bi => bi.BasketId == basket.Id && bi.ProductId == productId).FirstOrDefault();
 
             if (basketItem != null)
             {
-                // Ürün zaten sepetteyse sadece miktarını artır
+                
                 basketItem.Quantity += quantity;
                 basketItem.Updated = DateTime.Now;
                 await _basketItemRepository.UpdateAsync(basketItem);
             }
             else
             {
-                // Ürün sepette yoksa yeni bir satır olarak ekle
+                
                 var newBasketItem = new BasketItem
                 {
                     BasketId = basket.Id,

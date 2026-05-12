@@ -183,6 +183,5 @@ namespace uyg.UI.Controllers
         {
             return View();
         }
-
     }
 }

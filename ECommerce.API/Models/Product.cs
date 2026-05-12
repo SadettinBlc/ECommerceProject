@@ -8,14 +8,14 @@ namespace ECommerce.API.Models
         public string Description { get; set; }
         [Column(TypeName = "decimal(18,2)")]
         public decimal Price { get; set; }
-        public int Stock { get; set; } // Satış yapılınca düşecek
+        public int Stock { get; set; } 
         public int CategoryId { get; set; }
         public string UserId { get; set; }
         public string PhotoUrl { get; set; }
 
         public Category Category { get; set; }
         public AppUser User { get; set; }
-        // Product.cs dosyasının içine, diğer ICollection'ların yanına ekle:
+        
         public ICollection<ProductFeature> ProductFeatures { get; set; }
     }
 }
